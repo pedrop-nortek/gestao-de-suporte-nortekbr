@@ -14,7 +14,228 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      companies: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          notes: string | null
+          primary_email: string | null
+          updated_at: string
+          whatsapp_phone: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          notes?: string | null
+          primary_email?: string | null
+          updated_at?: string
+          whatsapp_phone?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          primary_email?: string | null
+          updated_at?: string
+          whatsapp_phone?: string | null
+        }
+        Relationships: []
+      }
+      ticket_attachments: {
+        Row: {
+          context_description: string | null
+          created_by: string | null
+          file_extension: string | null
+          file_size_bytes: number | null
+          file_type: string | null
+          filename: string
+          id: string
+          is_nortek_data: boolean | null
+          received_at: string
+          storage_location: string
+          ticket_id: string
+        }
+        Insert: {
+          context_description?: string | null
+          created_by?: string | null
+          file_extension?: string | null
+          file_size_bytes?: number | null
+          file_type?: string | null
+          filename: string
+          id?: string
+          is_nortek_data?: boolean | null
+          received_at?: string
+          storage_location: string
+          ticket_id: string
+        }
+        Update: {
+          context_description?: string | null
+          created_by?: string | null
+          file_extension?: string | null
+          file_size_bytes?: number | null
+          file_type?: string | null
+          filename?: string
+          id?: string
+          is_nortek_data?: boolean | null
+          received_at?: string
+          storage_location?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_attachments_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_messages: {
+        Row: {
+          channel: Database["public"]["Enums"]["communication_channel"]
+          content: string
+          created_at: string
+          created_by: string | null
+          external_message_id: string | null
+          id: string
+          is_internal: boolean
+          sender_email: string | null
+          sender_name: string | null
+          sender_phone: string | null
+          sender_type: string
+          ticket_id: string
+        }
+        Insert: {
+          channel: Database["public"]["Enums"]["communication_channel"]
+          content: string
+          created_at?: string
+          created_by?: string | null
+          external_message_id?: string | null
+          id?: string
+          is_internal?: boolean
+          sender_email?: string | null
+          sender_name?: string | null
+          sender_phone?: string | null
+          sender_type: string
+          ticket_id: string
+        }
+        Update: {
+          channel?: Database["public"]["Enums"]["communication_channel"]
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          external_message_id?: string | null
+          id?: string
+          is_internal?: boolean
+          sender_email?: string | null
+          sender_name?: string | null
+          sender_phone?: string | null
+          sender_type?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tickets: {
+        Row: {
+          category: string | null
+          channel: Database["public"]["Enums"]["communication_channel"]
+          company_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          equipment_model: string | null
+          external_message_id: string | null
+          id: string
+          priority: Database["public"]["Enums"]["ticket_priority"]
+          responsibility: Database["public"]["Enums"]["responsibility_type"]
+          status: Database["public"]["Enums"]["ticket_status"]
+          ticket_number: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          channel?: Database["public"]["Enums"]["communication_channel"]
+          company_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          equipment_model?: string | null
+          external_message_id?: string | null
+          id?: string
+          priority?: Database["public"]["Enums"]["ticket_priority"]
+          responsibility?: Database["public"]["Enums"]["responsibility_type"]
+          status?: Database["public"]["Enums"]["ticket_status"]
+          ticket_number?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          channel?: Database["public"]["Enums"]["communication_channel"]
+          company_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          equipment_model?: string | null
+          external_message_id?: string | null
+          id?: string
+          priority?: Database["public"]["Enums"]["ticket_priority"]
+          responsibility?: Database["public"]["Enums"]["responsibility_type"]
+          status?: Database["public"]["Enums"]["ticket_status"]
+          ticket_number?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tickets_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_profiles: {
+        Row: {
+          created_at: string
+          full_name: string | null
+          id: string
+          role: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          role?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          role?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +244,14 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      communication_channel: "email" | "whatsapp" | "manual" | "internal_note"
+      responsibility_type:
+        | "internal_support"
+        | "awaiting_client"
+        | "external_support"
+        | "other"
+      ticket_priority: "low" | "medium" | "high" | "urgent"
+      ticket_status: "open" | "in_progress" | "closed" | "paused"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +378,16 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      communication_channel: ["email", "whatsapp", "manual", "internal_note"],
+      responsibility_type: [
+        "internal_support",
+        "awaiting_client",
+        "external_support",
+        "other",
+      ],
+      ticket_priority: ["low", "medium", "high", "urgent"],
+      ticket_status: ["open", "in_progress", "closed", "paused"],
+    },
   },
 } as const
