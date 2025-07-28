@@ -69,16 +69,14 @@ const TicketDetail = () => {
     try {
       const { data, error } = await supabase
         .from('ticket_messages')
-        .select(`
-          *,
-          user_profiles (full_name)
-        `)
+        .select('*')
         .eq('ticket_id', id)
         .order('created_at', { ascending: true });
 
       if (error) throw error;
       setMessages(data || []);
     } catch (error) {
+      console.error('Erro ao carregar mensagens:', error);
       toast({
         title: 'Erro',
         description: 'Erro ao carregar mensagens',
@@ -255,8 +253,8 @@ const TicketDetail = () => {
                     <div className="flex items-center gap-2">
                       <User className="h-4 w-4" />
                        <span className="font-medium">
-                         Sistema
-                       </span>
+                          {message.sender_name || 'Sistema'}
+                        </span>
                       {message.is_internal && (
                         <Badge variant="outline" className="text-xs">Interno</Badge>
                       )}
