@@ -10,7 +10,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import TicketDetail from "./pages/TicketDetail";
-import NewTicket from "./pages/NewTicket";
+import { NewTicket } from "./pages/NewTicket";
 import { Companies } from "./pages/Companies";
 import { Reports } from "./pages/Reports";
 import NotFound from "./pages/NotFound";

@@ -17,45 +17,32 @@ import { ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { Database } from '@/integrations/supabase/types';
 
 type Company = Database['public']['Tables']['companies']['Row'];
 
-const ticketSchema = z.object({
-  title: z.string().min(1, 'Título é obrigatório'),
-  description: z.string().min(1, 'Descrição é obrigatória'),
-  company_id: z.string().min(1, 'Empresa é obrigatória'),
-  category: z.string().min(1, 'Categoria é obrigatória'),
-  priority: z.enum(['low', 'medium', 'high', 'urgent']),
-  channel: z.enum(['email', 'whatsapp', 'manual', 'internal_note']),
-  customer_email: z.string().email('Email inválido').optional().or(z.literal('')),
-  customer_data: z.string().optional(),
-});
+interface TicketFormData {
+  title: string;
+  description: string;
+  company_id: string;
+  category: string;
+  priority: Database['public']['Enums']['ticket_priority'];
+  equipment_model: string;
+}
 
-type TicketForm = z.infer<typeof ticketSchema>;
-
-const NewTicket = () => {
-  const navigate = useNavigate();
-  const { toast } = useToast();
+export const NewTicket = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
+  const navigate = useNavigate();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(false);
-
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    watch,
-    formState: { errors }
-  } = useForm<TicketForm>({
-    resolver: zodResolver(ticketSchema),
-    defaultValues: {
-      priority: 'medium',
-      channel: 'email',
-    }
+  const [formData, setFormData] = useState<TicketFormData>({
+    title: '',
+    description: '',
+    company_id: '',
+    category: '',
+    priority: 'medium',
+    equipment_model: '',
   });
 
   useEffect(() => {
@@ -71,7 +58,8 @@ const NewTicket = () => {
 
       if (error) throw error;
       setCompanies(data || []);
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Erro ao carregar empresas:', error);
       toast({
         title: 'Erro',
         description: 'Erro ao carregar empresas',
@@ -80,35 +68,34 @@ const NewTicket = () => {
     }
   };
 
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.title.trim() || !formData.description.trim() || !formData.company_id || !formData.category) {
+      toast({
+        title: 'Erro',
+        description: 'Todos os campos obrigatórios devem ser preenchidos',
+        variant: 'destructive',
+      });
+      return;
+    }
 
-  const onSubmit = async (data: TicketForm) => {
     setLoading(true);
     try {
-      let customerData = null;
-      if (data.customer_data) {
-        try {
-          customerData = JSON.parse(data.customer_data);
-        } catch {
-          // Se não for JSON válido, armazena como string
-          customerData = { data: data.customer_data };
-        }
-      }
-
-      const ticketData = {
-        title: data.title,
-        description: data.description,
-        company_id: data.company_id,
-        category: data.category,
-        priority: data.priority,
-        channel: data.channel,
-        customer_email: data.customer_email || null,
-        status: 'open' as const,
-        created_by: user?.id || '',
-      };
-
-      const { data: ticket, error } = await supabase
+      const { data: newTicket, error } = await supabase
         .from('tickets')
-        .insert(ticketData)
+        .insert({
+          title: formData.title.trim(),
+          description: formData.description.trim(),
+          company_id: formData.company_id,
+          category: formData.category,
+          priority: formData.priority,
+          equipment_model: formData.equipment_model || null,
+          created_by: user.id,
+          status: 'open',
+          responsibility: 'internal_support',
+          channel: 'manual',
+        })
         .select()
         .single();
 
@@ -119,11 +106,12 @@ const NewTicket = () => {
         description: 'Ticket criado com sucesso!',
       });
 
-      navigate(`/dashboard/tickets/${ticket.id}`);
-    } catch (error) {
+      navigate(`/dashboard/tickets/${newTicket.id}`);
+    } catch (error: any) {
+      console.error('Erro ao criar ticket:', error);
       toast({
         title: 'Erro',
-        description: 'Erro ao criar ticket',
+        description: error.message || 'Erro ao criar ticket',
         variant: 'destructive',
       });
     } finally {
@@ -148,135 +136,82 @@ const NewTicket = () => {
           <CardTitle>Criar Novo Ticket</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="title">Título *</Label>
-                <Input
-                  id="title"
-                  {...register('title')}
-                  placeholder="Título do ticket"
-                />
-                {errors.title && (
-                  <p className="text-sm text-destructive">{errors.title.message}</p>
-                )}
-              </div>
-
-              <div>
-                <Label htmlFor="customer_email">Email do Cliente</Label>
-                <Input
-                  id="customer_email"
-                  type="email"
-                  {...register('customer_email')}
-                  placeholder="cliente@email.com"
-                />
-                {errors.customer_email && (
-                  <p className="text-sm text-destructive">{errors.customer_email.message}</p>
-                )}
-              </div>
+          <form onSubmit={onSubmit} className="space-y-6">
+            <div>
+              <Label htmlFor="title">Título *</Label>
+              <Input
+                id="title"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                required
+              />
             </div>
 
             <div>
               <Label htmlFor="description">Descrição *</Label>
               <Textarea
                 id="description"
-                {...register('description')}
-                placeholder="Descreva o problema ou solicitação"
-                rows={4}
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                required
               />
-              {errors.description && (
-                <p className="text-sm text-destructive">{errors.description.message}</p>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="company_id">Empresa *</Label>
-                <Select onValueChange={(value) => setValue('company_id', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a empresa" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {companies.map((company) => (
-                      <SelectItem key={company.id} value={company.id}>
-                        {company.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errors.company_id && (
-                  <p className="text-sm text-destructive">{errors.company_id.message}</p>
-                )}
-              </div>
-
-              <div>
-                <Label htmlFor="category">Categoria *</Label>
-                <Select onValueChange={(value) => setValue('category', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a categoria" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="suporte_tecnico">Suporte Técnico</SelectItem>
-                    <SelectItem value="financeiro">Financeiro</SelectItem>
-                    <SelectItem value="comercial">Comercial</SelectItem>
-                    <SelectItem value="outros">Outros</SelectItem>
-                  </SelectContent>
-                </Select>
-                {errors.category && (
-                  <p className="text-sm text-destructive">{errors.category.message}</p>
-                )}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="priority">Prioridade *</Label>
-                <Select onValueChange={(value) => setValue('priority', value as any)} defaultValue="medium">
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">Baixa</SelectItem>
-                    <SelectItem value="medium">Média</SelectItem>
-                    <SelectItem value="high">Alta</SelectItem>
-                    <SelectItem value="urgent">Urgente</SelectItem>
-                  </SelectContent>
-                </Select>
-                {errors.priority && (
-                  <p className="text-sm text-destructive">{errors.priority.message}</p>
-                )}
-              </div>
-
-              <div>
-                <Label htmlFor="channel">Canal *</Label>
-                <Select onValueChange={(value) => setValue('channel', value as any)} defaultValue="email">
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="email">Email</SelectItem>
-                    <SelectItem value="whatsapp">WhatsApp</SelectItem>
-                    <SelectItem value="manual">Manual</SelectItem>
-                    <SelectItem value="internal_note">Nota Interna</SelectItem>
-                  </SelectContent>
-                </Select>
-                {errors.channel && (
-                  <p className="text-sm text-destructive">{errors.channel.message}</p>
-                )}
-              </div>
             </div>
 
             <div>
-              <Label htmlFor="customer_data">Dados do Cliente (JSON opcional)</Label>
-              <Textarea
-                id="customer_data"
-                {...register('customer_data')}
-                placeholder='{"nome": "João", "telefone": "123456789"}'
-                rows={3}
+              <Label htmlFor="company">Empresa *</Label>
+              <Select
+                value={formData.company_id}
+                onValueChange={(value) => setFormData({ ...formData, company_id: value })}
+                required
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione uma empresa" />
+                </SelectTrigger>
+                <SelectContent>
+                  {companies.map((company) => (
+                    <SelectItem key={company.id} value={company.id}>
+                      {company.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="category">Categoria *</Label>
+              <Input
+                id="category"
+                value={formData.category}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                required
               />
-              <p className="text-sm text-muted-foreground mt-1">
-                Dados adicionais do cliente em formato JSON
-              </p>
+            </div>
+
+            <div>
+              <Label htmlFor="priority">Prioridade</Label>
+              <Select
+                value={formData.priority}
+                onValueChange={(value) => setFormData({ ...formData, priority: value as Database['public']['Enums']['ticket_priority'] })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Baixa</SelectItem>
+                  <SelectItem value="medium">Média</SelectItem>
+                  <SelectItem value="high">Alta</SelectItem>
+                  <SelectItem value="urgent">Urgente</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="equipment_model">Modelo do Equipamento</Label>
+              <Input
+                id="equipment_model"
+                value={formData.equipment_model}
+                onChange={(e) => setFormData({ ...formData, equipment_model: e.target.value })}
+              />
             </div>
 
             <div className="flex gap-4">
@@ -293,5 +228,3 @@ const NewTicket = () => {
     </div>
   );
 };
-
-export default NewTicket;
