@@ -98,24 +98,30 @@ const TicketDetail = () => {
         .insert({
           ticket_id: id!,
           created_by: user.id,
-          content: newMessage,
+          content: newMessage.trim(),
           is_internal: false,
-          channel: 'manual',
-          sender_type: 'user',
+          channel: 'manual' as Database['public']['Enums']['communication_channel'],
+          sender_type: 'support_agent',
+          sender_name: user.email || 'Agente',
+          sender_email: user.email,
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao inserir mensagem:', error);
+        throw error;
+      }
 
       setNewMessage('');
       fetchMessages();
       toast({
         title: 'Sucesso',
-        description: 'Mensagem adicionada',
+        description: 'Mensagem adicionada com sucesso',
       });
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Erro completo:', error);
       toast({
         title: 'Erro',
-        description: 'Erro ao adicionar mensagem',
+        description: error.message || 'Erro ao adicionar mensagem',
         variant: 'destructive',
       });
     }
