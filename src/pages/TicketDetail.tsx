@@ -33,7 +33,7 @@ const TicketDetail = () => {
   const [messages, setMessages] = useState<TicketMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [newMessage, setNewMessage] = useState('');
-  const [newStatus, setNewStatus] = useState('');
+  const [newStatus, setNewStatus] = useState<Database['public']['Enums']['ticket_status']>('open');
 
   useEffect(() => {
     if (id) {
@@ -303,7 +303,7 @@ const TicketDetail = () => {
             <CardContent className="space-y-4">
               <div>
                 <Label htmlFor="status">Alterar Status</Label>
-                <Select value={newStatus} onValueChange={setNewStatus}>
+                <Select value={newStatus} onValueChange={(value) => setNewStatus(value as Database['public']['Enums']['ticket_status'])}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
