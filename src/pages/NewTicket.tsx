@@ -28,7 +28,18 @@ interface TicketFormData {
   category: string;
   priority: Database['public']['Enums']['ticket_priority'];
   equipment_model: string;
+  serial_number: string;
 }
+
+const PREDEFINED_CATEGORIES = [
+  'System integration',
+  'Deployment configuration', 
+  'Data processing/interpretation',
+  'Instrument communication and troubleshooting',
+  'Instrument specific/technical information',
+  'Theoretical questions/principal of our instrument',
+  'Other'
+];
 
 export const NewTicket = () => {
   const { user } = useAuth();
@@ -43,6 +54,7 @@ export const NewTicket = () => {
     category: '',
     priority: 'medium',
     equipment_model: '',
+    serial_number: '',
   });
 
   useEffect(() => {
@@ -91,6 +103,7 @@ export const NewTicket = () => {
           category: formData.category,
           priority: formData.priority,
           equipment_model: formData.equipment_model || null,
+          serial_number: formData.serial_number || null,
           created_by: user.id,
           status: 'open',
           responsibility: 'internal_support',
@@ -179,12 +192,22 @@ export const NewTicket = () => {
 
             <div>
               <Label htmlFor="category">Categoria *</Label>
-              <Input
-                id="category"
+              <Select
                 value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                onValueChange={(value) => setFormData({ ...formData, category: value })}
                 required
-              />
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione uma categoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  {PREDEFINED_CATEGORIES.map((category) => (
+                    <SelectItem key={category} value={category}>
+                      {category}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div>
@@ -211,6 +234,16 @@ export const NewTicket = () => {
                 id="equipment_model"
                 value={formData.equipment_model}
                 onChange={(e) => setFormData({ ...formData, equipment_model: e.target.value })}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="serial_number">Número de Série</Label>
+              <Input
+                id="serial_number"
+                value={formData.serial_number}
+                onChange={(e) => setFormData({ ...formData, serial_number: e.target.value })}
+                placeholder="Digite o número de série do equipamento"
               />
             </div>
 

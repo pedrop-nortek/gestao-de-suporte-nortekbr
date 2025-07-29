@@ -60,15 +60,28 @@ const Profile = () => {
 
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from('user_profiles')
-        .upsert({
-          user_id: user.id,
-          full_name: fullName,
-          role: profile?.role || 'support_agent',
-        });
+      if (profile) {
+        // Update existing profile
+        const { error } = await supabase
+          .from('user_profiles')
+          .update({
+            full_name: fullName,
+          })
+          .eq('user_id', user.id);
 
-      if (error) throw error;
+        if (error) throw error;
+      } else {
+        // Create new profile if it doesn't exist
+        const { error } = await supabase
+          .from('user_profiles')
+          .insert({
+            user_id: user.id,
+            full_name: fullName,
+            role: 'support_agent',
+          });
+
+        if (error) throw error;
+      }
 
       toast({
         title: 'Sucesso',
@@ -80,7 +93,7 @@ const Profile = () => {
       console.error('Erro ao atualizar perfil:', error);
       toast({
         title: 'Erro',
-        description: 'Erro ao atualizar perfil',
+        description: error instanceof Error ? error.message : 'Erro ao atualizar perfil',
         variant: 'destructive',
       });
     } finally {
