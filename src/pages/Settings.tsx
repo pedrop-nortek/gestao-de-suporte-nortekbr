@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useTheme } from 'next-themes';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -54,16 +55,43 @@ const Settings = () => {
   };
 
   const updateSettings = async (newSettings: Partial<UserSettings>) => {
-    try {
-      const { error } = await supabase
-        .from('user_settings')
-        .upsert({
-          user_id: user?.id,
-          ...settings,
-          ...newSettings,
-        });
+    if (!user) {
+      toast({
+        title: 'Erro',
+        description: 'Usuário não autenticado',
+        variant: 'destructive',
+      });
+      return;
+    }
 
-      if (error) throw error;
+    try {
+      // Check if settings exist
+      const { data: existingSettings } = await supabase
+        .from('user_settings')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (existingSettings) {
+        // Update existing settings
+        const { error } = await supabase
+          .from('user_settings')
+          .update(newSettings)
+          .eq('user_id', user.id);
+
+        if (error) throw error;
+      } else {
+        // Insert new settings
+        const { error } = await supabase
+          .from('user_settings')
+          .insert({
+            user_id: user.id,
+            ...settings,
+            ...newSettings,
+          });
+
+        if (error) throw error;
+      }
 
       setSettings(prev => ({ ...prev, ...newSettings }));
       toast({
@@ -74,7 +102,7 @@ const Settings = () => {
       console.error('Erro ao atualizar configurações:', error);
       toast({
         title: 'Erro',
-        description: 'Erro ao atualizar configurações',
+        description: error instanceof Error ? error.message : 'Erro ao atualizar configurações',
         variant: 'destructive',
       });
     }
@@ -201,9 +229,29 @@ const Settings = () => {
             <CardTitle>Sistema</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Button variant="outline" onClick={clearCache}>
-              Limpar cache
-            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline">
+                  Limpar cache
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Confirmar limpeza de cache</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Esta ação irá limpar todos os dados temporários armazenados no seu navegador.
+                    Isso não afetará seus dados no servidor, apenas as informações em cache local.
+                    Você pode precisar fazer login novamente.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={clearCache}>
+                    Limpar cache
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
             <Button variant="outline" onClick={exportData}>
               Exportar dados
             </Button>

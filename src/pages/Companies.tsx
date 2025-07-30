@@ -64,6 +64,15 @@ export const Companies = () => {
       return;
     }
 
+    if (!user) {
+      toast({
+        title: 'Erro',
+        description: 'Usuário não autenticado',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     try {
       if (editingCompany) {
         const { error } = await supabase
