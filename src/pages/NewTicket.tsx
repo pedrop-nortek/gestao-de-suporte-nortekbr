@@ -46,6 +46,7 @@ export const NewTicket = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [companies, setCompanies] = useState<Company[]>([]);
+  const [equipmentModels, setEquipmentModels] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<TicketFormData>({
     title: '',
@@ -59,6 +60,7 @@ export const NewTicket = () => {
 
   useEffect(() => {
     fetchCompanies();
+    fetchEquipmentModels();
   }, []);
 
   const fetchCompanies = async () => {
@@ -75,6 +77,25 @@ export const NewTicket = () => {
       toast({
         title: 'Erro',
         description: 'Erro ao carregar empresas',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const fetchEquipmentModels = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('equipment_models')
+        .select('id, name')
+        .order('name');
+      
+      if (error) throw error;
+      setEquipmentModels(data || []);
+    } catch (error: any) {
+      console.error('Erro ao carregar modelos de equipamento:', error);
+      toast({
+        title: 'Erro',
+        description: 'Erro ao carregar modelos de equipamento',
         variant: 'destructive',
       });
     }
@@ -230,11 +251,22 @@ export const NewTicket = () => {
 
             <div>
               <Label htmlFor="equipment_model">Modelo do Equipamento</Label>
-              <Input
-                id="equipment_model"
+              <Select
                 value={formData.equipment_model}
-                onChange={(e) => setFormData({ ...formData, equipment_model: e.target.value })}
-              />
+                onValueChange={(value) => setFormData({ ...formData, equipment_model: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um modelo de equipamento" />
+                </SelectTrigger>
+                <SelectContent>
+                  {equipmentModels.map((model) => (
+                    <SelectItem key={model.id} value={model.name}>
+                      {model.name}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value="other">Outro (especificar na descrição)</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div>

@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ArrowLeft, Clock, User, Building2, Tag, FileText } from 'lucide-react';
+import { ArrowLeft, Clock, User, Building2, Tag, FileText, Wrench, Hash } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { Database } from '@/integrations/supabase/types';
@@ -236,6 +236,18 @@ const TicketDetail = () => {
                   <FileText className="h-4 w-4" />
                   <Badge variant="outline">{ticket.priority}</Badge>
                 </div>
+                {ticket.equipment_model && (
+                  <div className="flex items-center gap-2">
+                    <Wrench className="h-4 w-4" />
+                    <span>{ticket.equipment_model}</span>
+                  </div>
+                )}
+                {ticket.serial_number && (
+                  <div className="flex items-center gap-2">
+                    <Hash className="h-4 w-4" />
+                    <span>{ticket.serial_number}</span>
+                  </div>
+                )}
               </div>
 
             </CardContent>

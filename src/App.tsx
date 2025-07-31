@@ -12,6 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import TicketDetail from "./pages/TicketDetail";
 import { NewTicket } from "./pages/NewTicket";
 import { Companies } from "./pages/Companies";
+import EquipmentModels from "./pages/EquipmentModels";
 import { Reports } from "./pages/Reports";
 import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
@@ -54,6 +55,13 @@ const App = () => (
               <ProtectedRoute>
                 <DashboardLayout>
                   <Companies />
+                </DashboardLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard/equipment-models" element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <EquipmentModels />
                 </DashboardLayout>
               </ProtectedRoute>
             } />
