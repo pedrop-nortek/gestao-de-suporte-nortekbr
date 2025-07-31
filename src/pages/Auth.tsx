@@ -5,13 +5,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Navigate } from 'react-router-dom';
 
 const Auth = () => {
-  const { signIn, signUp, user } = useAuth();
+  const { signIn, signUp, resetPassword, user } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
 
   if (user) {
     return <Navigate to="/dashboard" replace />;
@@ -69,6 +72,30 @@ const Auth = () => {
     setLoading(false);
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    const { error } = await resetPassword(resetEmail);
+
+    if (error) {
+      toast({
+        title: 'Erro',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } else {
+      toast({
+        title: 'Email enviado',
+        description: 'Verifique seu email para redefinir a senha.',
+      });
+      setForgotPasswordOpen(false);
+      setResetEmail('');
+    }
+
+    setLoading(false);
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
@@ -108,6 +135,48 @@ const Auth = () => {
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? 'Entrando...' : 'Entrar'}
                 </Button>
+                
+                <Dialog open={forgotPasswordOpen} onOpenChange={setForgotPasswordOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="link" className="w-full mt-2 text-sm">
+                      Esqueci minha senha
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Recuperar Senha</DialogTitle>
+                      <DialogDescription>
+                        Digite seu email para receber um link de recuperação.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleForgotPassword} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="reset-email">Email</Label>
+                        <Input
+                          id="reset-email"
+                          type="email"
+                          value={resetEmail}
+                          onChange={(e) => setResetEmail(e.target.value)}
+                          required
+                          placeholder="seu@email.com"
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          className="flex-1"
+                          onClick={() => setForgotPasswordOpen(false)}
+                        >
+                          Cancelar
+                        </Button>
+                        <Button type="submit" className="flex-1" disabled={loading}>
+                          {loading ? 'Enviando...' : 'Enviar'}
+                        </Button>
+                      </div>
+                    </form>
+                  </DialogContent>
+                </Dialog>
               </form>
             </TabsContent>
             
