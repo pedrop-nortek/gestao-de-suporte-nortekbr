@@ -7,7 +7,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/
 import { toast } from '@/hooks/use-toast';
 import { BarChart3, Clock, CheckCircle, AlertCircle, PieChart, TrendingUp, Users, Building2, Wrench, Tag, Filter } from 'lucide-react';
 import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, LineChart, Line } from 'recharts';
-import { format, startOfMonth, endOfMonth, startOfYear, endOfYear, parseISO } from 'date-fns';
+import { format, startOfMonth, endOfMonth, startOfYear, endOfYear, parseISO, startOfWeek, endOfWeek, addWeeks } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 interface ExtendedReportData {
@@ -23,7 +23,7 @@ interface ExtendedReportData {
   ticketsByCategory: Array<{ name: string; value: number }>;
   ticketsByEquipment: Array<{ name: string; value: number }>;
   ticketsByUser: Array<{ name: string; value: number }>;
-  ticketsOverTime: Array<{ month: string; tickets: number }>;
+  ticketsOverTime: Array<{ week: string; tickets: number }>;
 }
 
 const chartConfig = {
@@ -234,23 +234,31 @@ export const Reports = () => {
         .sort((a, b) => b.value - a.value)
         .slice(0, 8);
 
-      // Evolução temporal (últimos 12 meses)
+      // Evolução temporal semanal (últimos 12 meses)
       const ticketsOverTime = [];
       const now = new Date();
-      for (let i = 11; i >= 0; i--) {
-        const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        const monthStart = startOfMonth(date);
-        const monthEnd = endOfMonth(date);
+      const weeklyStartDate = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+      let currentWeek = startOfWeek(weeklyStartDate, { weekStartsOn: 0 });
+      const weeklyEndDate = endOfWeek(now, { weekStartsOn: 0 });
+      
+      while (currentWeek <= weeklyEndDate) {
+        const weekStart = currentWeek;
+        const weekEnd = endOfWeek(currentWeek, { weekStartsOn: 0 });
         
-        const monthTickets = tickets?.filter(ticket => {
+        const weekTickets = tickets?.filter(ticket => {
           const ticketDate = parseISO(ticket.created_at);
-          return ticketDate >= monthStart && ticketDate <= monthEnd;
+          return ticketDate >= weekStart && ticketDate <= weekEnd;
         }).length || 0;
 
+        // Calcular número da semana no mês (1-5)
+        const weekOfMonth = Math.ceil((weekStart.getDate() + (new Date(weekStart.getFullYear(), weekStart.getMonth(), 1).getDay())) / 7);
+        
         ticketsOverTime.push({
-          month: format(date, 'MMM/yy', { locale: ptBR }),
-          tickets: monthTickets
+          week: `S${weekOfMonth} ${format(weekStart, 'MMM/yy', { locale: ptBR })}`,
+          tickets: weekTickets
         });
+        
+        currentWeek = addWeeks(currentWeek, 1);
       }
 
       const avgResolutionTime = 2.5; // Placeholder
@@ -485,31 +493,40 @@ export const Reports = () => {
         </Card>
       </div>
 
-      {/* Gráfico de evolução mensal */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4" />
-            Evolução Mensal
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ChartContainer config={chartConfig} className="h-[300px]">
-            <LineChart data={data.ticketsOverTime}>
-              <XAxis dataKey="month" />
-              <YAxis />
-              <ChartTooltip content={<ChartTooltipContent />} />
-              <Line 
-                type="monotone" 
-                dataKey="tickets" 
-                stroke="hsl(var(--chart-1))" 
-                strokeWidth={2}
-                dot={{ fill: "hsl(var(--chart-1))" }}
-              />
-            </LineChart>
-          </ChartContainer>
-        </CardContent>
-      </Card>
+      {/* Gráfico de evolução semanal */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <Card className="md:col-span-2">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-4 w-4" />
+              Evolução Semanal (12 meses)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer config={chartConfig} className="h-[400px]">
+              <LineChart data={data.ticketsOverTime}>
+                <XAxis 
+                  dataKey="week" 
+                  angle={-45}
+                  textAnchor="end"
+                  height={80}
+                  interval="preserveStartEnd"
+                />
+                <YAxis />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Line 
+                  type="monotone" 
+                  dataKey="tickets" 
+                  stroke="hsl(var(--chart-1))" 
+                  strokeWidth={2}
+                  dot={{ fill: "hsl(var(--chart-1))", r: 3 }}
+                  activeDot={{ r: 5, fill: "hsl(var(--chart-1))" }}
+                />
+              </LineChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Gráficos secundários */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
