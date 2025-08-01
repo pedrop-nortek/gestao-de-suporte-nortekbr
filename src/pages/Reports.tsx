@@ -513,80 +513,78 @@ export const Reports = () => {
       </div>
 
       {/* Gráfico de evolução semanal */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <Card className="md:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4" />
-              Evolução Semanal (12 meses)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer config={chartConfig} className="h-[400px]">
-              <LineChart data={data.ticketsOverTime}>
-                <CartesianGrid 
-                  strokeDasharray="3 3" 
-                  stroke="hsl(var(--border))" 
-                  vertical={false}
-                  horizontal={false}
+      <Card className="w-full">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="h-4 w-4" />
+            Evolução Semanal (12 meses)
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ChartContainer config={chartConfig} className="h-[400px]">
+            <LineChart data={data.ticketsOverTime}>
+              <CartesianGrid 
+                strokeDasharray="3 3" 
+                stroke="hsl(var(--border))" 
+                vertical={false}
+                horizontal={false}
+              />
+              {/* Linhas verticais para separar meses */}
+              {Array.from({ length: 11 }, (_, i) => (
+                <line
+                  key={i}
+                  x1={`${((i + 1) * 4 - 0.5) * (100 / 48)}%`}
+                  y1="0%"
+                  x2={`${((i + 1) * 4 - 0.5) * (100 / 48)}%`}
+                  y2="100%"
+                  stroke="hsl(var(--border))"
+                  strokeDasharray="3 3"
+                  opacity={0.5}
                 />
-                {/* Linhas verticais para separar meses */}
-                {Array.from({ length: 11 }, (_, i) => (
-                  <line
-                    key={i}
-                    x1={`${((i + 1) * 4 - 0.5) * (100 / 48)}%`}
-                    y1="0%"
-                    x2={`${((i + 1) * 4 - 0.5) * (100 / 48)}%`}
-                    y2="100%"
-                    stroke="hsl(var(--border))"
-                    strokeDasharray="3 3"
-                    opacity={0.5}
-                  />
-                ))}
-                <XAxis 
-                  dataKey="week" 
-                  angle={-45}
-                  textAnchor="end"
-                  height={80}
-                  interval={0}
-                  tick={{ fontSize: 12 }}
-                />
-                <YAxis />
-                <ChartTooltip 
-                  content={({ active, payload, label }) => {
-                    if (active && payload && payload.length) {
-                      const data = payload[0].payload;
-                      return (
-                        <div className="rounded-lg border bg-background p-2 shadow-sm">
-                          <div className="grid gap-2">
-                            <div className="flex flex-col">
-                              <span className="text-[0.70rem] uppercase text-muted-foreground">
-                                {data.weekDetail}
-                              </span>
-                              <span className="font-bold text-muted-foreground">
-                                {payload[0].value} tickets
-                              </span>
-                            </div>
+              ))}
+              <XAxis 
+                dataKey="week" 
+                angle={-45}
+                textAnchor="end"
+                height={80}
+                interval={0}
+                tick={{ fontSize: 12 }}
+              />
+              <YAxis />
+              <ChartTooltip 
+                content={({ active, payload, label }) => {
+                  if (active && payload && payload.length) {
+                    const data = payload[0].payload;
+                    return (
+                      <div className="rounded-lg border bg-background p-2 shadow-sm">
+                        <div className="grid gap-2">
+                          <div className="flex flex-col">
+                            <span className="text-[0.70rem] uppercase text-muted-foreground">
+                              {data.weekDetail}
+                            </span>
+                            <span className="font-bold text-muted-foreground">
+                              {payload[0].value} tickets
+                            </span>
                           </div>
                         </div>
-                      );
-                    }
-                    return null;
-                  }}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="tickets" 
-                  stroke="hsl(var(--chart-1))" 
-                  strokeWidth={2}
-                  dot={{ fill: "hsl(var(--chart-1))", r: 3 }}
-                  activeDot={{ r: 5, fill: "hsl(var(--chart-1))" }}
-                />
-              </LineChart>
-            </ChartContainer>
-          </CardContent>
-        </Card>
-      </div>
+                      </div>
+                    );
+                  }
+                  return null;
+                }}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="tickets" 
+                stroke="hsl(var(--chart-1))" 
+                strokeWidth={2}
+                dot={{ fill: "hsl(var(--chart-1))", r: 3 }}
+                activeDot={{ r: 5, fill: "hsl(var(--chart-1))" }}
+              />
+            </LineChart>
+          </ChartContainer>
+        </CardContent>
+      </Card>
 
       {/* Gráficos secundários */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
