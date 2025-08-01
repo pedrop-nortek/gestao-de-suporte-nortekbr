@@ -435,8 +435,8 @@ export const Reports = () => {
                     dataKey="value"
                     cx="50%"
                     cy="50%"
-                    outerRadius={80}
-                    innerRadius={40}
+                    outerRadius="70%"
+                    innerRadius="35%"
                   >
                     {data.ticketsByStatus.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
@@ -466,8 +466,8 @@ export const Reports = () => {
                     dataKey="value"
                     cx="50%"
                     cy="50%"
-                    outerRadius={80}
-                    innerRadius={40}
+                    outerRadius="70%"
+                    innerRadius="35%"
                   >
                     {data.ticketsByPriority.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
@@ -498,8 +498,8 @@ export const Reports = () => {
                     nameKey="name"
                     cx="50%"
                     cy="50%"
-                    outerRadius={80}
-                    innerRadius={40}
+                    outerRadius="70%"
+                    innerRadius="35%"
                   >
                     {data.ticketsByCompany.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={getChartColor(index)} />
@@ -521,67 +521,69 @@ export const Reports = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <ChartContainer config={chartConfig} className="h-[400px]">
-            <LineChart data={data.ticketsOverTime}>
-              <CartesianGrid 
-                strokeDasharray="3 3" 
-                stroke="hsl(var(--border))" 
-                vertical={false}
-                horizontal={false}
-              />
-              {/* Linhas verticais para separar meses */}
-              {Array.from({ length: 11 }, (_, i) => (
-                <line
-                  key={i}
-                  x1={`${((i + 1) * 4 - 0.5) * (100 / 48)}%`}
-                  y1="0%"
-                  x2={`${((i + 1) * 4 - 0.5) * (100 / 48)}%`}
-                  y2="100%"
-                  stroke="hsl(var(--border))"
-                  strokeDasharray="3 3"
-                  opacity={0.5}
+          <ChartContainer config={chartConfig} className="h-[400px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={data.ticketsOverTime}>
+                <CartesianGrid 
+                  strokeDasharray="3 3" 
+                  stroke="hsl(var(--border))" 
+                  vertical={false}
+                  horizontal={false}
                 />
-              ))}
-              <XAxis 
-                dataKey="week" 
-                angle={-45}
-                textAnchor="end"
-                height={80}
-                interval={0}
-                tick={{ fontSize: 12 }}
-              />
-              <YAxis />
-              <ChartTooltip 
-                content={({ active, payload, label }) => {
-                  if (active && payload && payload.length) {
-                    const data = payload[0].payload;
-                    return (
-                      <div className="rounded-lg border bg-background p-2 shadow-sm">
-                        <div className="grid gap-2">
-                          <div className="flex flex-col">
-                            <span className="text-[0.70rem] uppercase text-muted-foreground">
-                              {data.weekDetail}
-                            </span>
-                            <span className="font-bold text-muted-foreground">
-                              {payload[0].value} tickets
-                            </span>
+                {/* Linhas verticais para separar meses */}
+                {Array.from({ length: 11 }, (_, i) => (
+                  <line
+                    key={i}
+                    x1={`${((i + 1) * 4 - 0.5) * (100 / 48)}%`}
+                    y1="0%"
+                    x2={`${((i + 1) * 4 - 0.5) * (100 / 48)}%`}
+                    y2="100%"
+                    stroke="hsl(var(--border))"
+                    strokeDasharray="3 3"
+                    opacity={0.5}
+                  />
+                ))}
+                <XAxis 
+                  dataKey="week" 
+                  angle={-45}
+                  textAnchor="end"
+                  height={80}
+                  interval={0}
+                  tick={{ fontSize: 12 }}
+                />
+                <YAxis />
+                <ChartTooltip 
+                  content={({ active, payload, label }) => {
+                    if (active && payload && payload.length) {
+                      const data = payload[0].payload;
+                      return (
+                        <div className="rounded-lg border bg-background p-2 shadow-sm">
+                          <div className="grid gap-2">
+                            <div className="flex flex-col">
+                              <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                {data.weekDetail}
+                              </span>
+                              <span className="font-bold text-muted-foreground">
+                                {payload[0].value} tickets
+                              </span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    );
-                  }
-                  return null;
-                }}
-              />
-              <Line 
-                type="monotone" 
-                dataKey="tickets" 
-                stroke="hsl(var(--chart-1))" 
-                strokeWidth={2}
-                dot={{ fill: "hsl(var(--chart-1))", r: 3 }}
-                activeDot={{ r: 5, fill: "hsl(var(--chart-1))" }}
-              />
-            </LineChart>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="tickets" 
+                  stroke="hsl(var(--chart-1))" 
+                  strokeWidth={2}
+                  dot={{ fill: "hsl(var(--chart-1))", r: 3 }}
+                  activeDot={{ r: 5, fill: "hsl(var(--chart-1))" }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
           </ChartContainer>
         </CardContent>
       </Card>
@@ -607,8 +609,8 @@ export const Reports = () => {
                     nameKey="name"
                     cx="50%"
                     cy="50%"
-                    outerRadius={80}
-                    innerRadius={40}
+                    outerRadius="70%"
+                    innerRadius="35%"
                   >
                     {data.ticketsByCategory.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={getChartColor(index)} />
@@ -639,8 +641,8 @@ export const Reports = () => {
                     nameKey="name"
                     cx="50%"
                     cy="50%"
-                    outerRadius={80}
-                    innerRadius={40}
+                    outerRadius="70%"
+                    innerRadius="35%"
                   >
                     {data.ticketsByEquipment.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={getChartColor(index)} />
@@ -671,8 +673,8 @@ export const Reports = () => {
                     nameKey="name"
                     cx="50%"
                     cy="50%"
-                    outerRadius={80}
-                    innerRadius={40}
+                    outerRadius="70%"
+                    innerRadius="35%"
                   >
                     {data.ticketsByUser.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={getChartColor(index)} />
