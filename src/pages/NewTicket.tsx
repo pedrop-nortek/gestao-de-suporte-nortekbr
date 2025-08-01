@@ -36,7 +36,7 @@ interface TicketFormData {
   contact_id: string;
   category: string;
   priority: Database['public']['Enums']['ticket_priority'];
-  equipment_model_id: string;
+  equipment_model_id: string | null;
   serial_number: string;
   assigned_to: string;
 }
