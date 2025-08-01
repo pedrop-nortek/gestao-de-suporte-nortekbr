@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Ticket, Plus, Building2, Settings, User, BarChart3, Wrench } from "lucide-react";
+import { Ticket, Plus, Building2, Settings, User, BarChart3, Wrench, RefreshCw } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 
 import {
@@ -20,6 +20,7 @@ const menuItems = [
   { title: "Novo Ticket", url: "/dashboard/tickets/new", icon: Plus },
   { title: "Empresas", url: "/dashboard/companies", icon: Building2 },
   { title: "Modelos de Equipamento", url: "/dashboard/equipment-models", icon: Wrench },
+  { title: "RMAs", url: "/dashboard/rmas", icon: RefreshCw },
   { title: "Relatórios", url: "/dashboard/reports", icon: BarChart3 },
 ];
 

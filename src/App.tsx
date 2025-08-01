@@ -67,6 +67,20 @@ const App = () => (
                 </DashboardLayout>
               </ProtectedRoute>
             } />
+            <Route path="/dashboard/rmas" element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <RMAs />
+                </DashboardLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard/rmas/:id" element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <RMADetail />
+                </DashboardLayout>
+              </ProtectedRoute>
+            } />
             <Route path="/dashboard/reports" element={
               <ProtectedRoute>
                 <DashboardLayout>

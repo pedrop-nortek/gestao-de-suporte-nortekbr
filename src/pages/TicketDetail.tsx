@@ -26,7 +26,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { ArrowLeft, Clock, User, Building2, Tag, FileText, Wrench, Hash, Edit, Trash2, Save, X } from 'lucide-react';
+import { ArrowLeft, Clock, User, Building2, Tag, FileText, Wrench, Hash, Edit, Trash2, Save, X, Download, Plus, MessageSquare } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { Database } from '@/integrations/supabase/types';
@@ -49,8 +49,6 @@ type Ticket = Database['public']['Tables']['tickets']['Row'] & {
   contacts?: { name: string } | null;
 };
 
-type TicketMessage = Database['public']['Tables']['ticket_messages']['Row'];
-
 // Schema de validação para edição do ticket
 const editTicketSchema = z.object({
   title: z.string().min(1, 'Título é obrigatório'),
@@ -70,7 +68,6 @@ const TicketDetail = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [ticket, setTicket] = useState<Ticket | null>(null);
-  const [messages, setMessages] = useState<TicketMessage[]>([]);
   const [users, setUsers] = useState<{ id: string; full_name: string | null; user_id: string }[]>([]);
   const [companies, setCompanies] = useState<{ id: string; name: string }[]>([]);
   const [contacts, setContacts] = useState<{ id: string; name: string; company_id: string }[]>([]);
@@ -89,7 +86,9 @@ const TicketDetail = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  const [newMessage, setNewMessage] = useState('');
+  const [newLogEntry, setNewLogEntry] = useState('');
+  const [rmaNumber, setRmaNumber] = useState('');
+  const [showCreateRMA, setShowCreateRMA] = useState(false);
   const [newStatus, setNewStatus] = useState<Database['public']['Enums']['ticket_status']>('open');
   const [newAssignedTo, setNewAssignedTo] = useState<string>('unassigned');
 
@@ -156,8 +155,6 @@ const TicketDetail = () => {
         setNewStatus(data.status);
         setNewAssignedTo(data.assigned_to || 'unassigned');
       }
-      
-      await fetchMessages();
     } catch (error: any) {
       console.error('Error fetching ticket details:', error);
       toast({
@@ -167,21 +164,6 @@ const TicketDetail = () => {
       });
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchMessages = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('ticket_messages')
-        .select('*')
-        .eq('ticket_id', id)
-        .order('created_at', { ascending: true });
-
-      if (error) throw error;
-      setMessages(data || []);
-    } catch (error: any) {
-      console.error('Erro ao carregar mensagens:', error);
     }
   };
 
@@ -246,6 +228,107 @@ const TicketDetail = () => {
     }
   };
 
+  const addLogEntry = async () => {
+    if (!newLogEntry.trim() || !ticket) return;
+
+    try {
+      const timestamp = new Date().toLocaleString('pt-BR');
+      const logEntry = `\n[${timestamp}]\n${newLogEntry.trim()}\n`;
+      const updatedLog = (ticket.ticket_log || '') + logEntry;
+
+      const { error } = await supabase
+        .from('tickets')
+        .update({ ticket_log: updatedLog })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setNewLogEntry('');
+      await fetchTicketDetails();
+      
+      toast({
+        title: "Sucesso",
+        description: "Entrada adicionada ao log do ticket",
+      });
+    } catch (error) {
+      console.error('Error adding log entry:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível adicionar a entrada ao log",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const exportLog = () => {
+    if (!ticket) return;
+
+    const logContent = `TICKET #${ticket.ticket_number} - ${ticket.title}\n` +
+                      `Data de criação: ${new Date(ticket.created_at).toLocaleString('pt-BR')}\n` +
+                      `Status: ${ticket.status}\n` +
+                      `${ticket.companies ? `Empresa: ${ticket.companies.name}\n` : ''}` +
+                      `${ticket.contacts ? `Contato: ${ticket.contacts.name}\n` : ''}` +
+                      `${ticket.equipment_models ? `Equipamento: ${ticket.equipment_models.name}\n` : ''}` +
+                      `${ticket.serial_number ? `Número de série: ${ticket.serial_number}\n` : ''}` +
+                      `\n--- LOG DO TICKET ---\n` +
+                      `${ticket.ticket_log || 'Nenhuma entrada no log ainda.'}`;
+
+    const blob = new Blob([logContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ticket-${ticket.ticket_number}-log.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const createRMA = async () => {
+    if (!rmaNumber.trim() || !ticket) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('rma_requests')
+        .insert({
+          ticket_id: ticket.id,
+          rma_number: rmaNumber.trim(),
+          created_by: user?.id,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setRmaNumber('');
+      setShowCreateRMA(false);
+      
+      toast({
+        title: "Sucesso",
+        description: "RMA criado com sucesso",
+      });
+
+      // Add log entry about RMA creation
+      const timestamp = new Date().toLocaleString('pt-BR');
+      const logEntry = `\n[${timestamp}]\nRMA criado: ${rmaNumber.trim()}\n`;
+      const updatedLog = (ticket.ticket_log || '') + logEntry;
+
+      await supabase
+        .from('tickets')
+        .update({ ticket_log: updatedLog })
+        .eq('id', id);
+
+      navigate(`/dashboard/rmas/${data.id}`);
+    } catch (error) {
+      console.error('Error creating RMA:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível criar o RMA",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleEdit = () => {
     setIsEditing(true);
   };
@@ -293,13 +376,6 @@ const TicketDetail = () => {
   const handleDelete = async () => {
     setDeleteLoading(true);
     try {
-      // Primeiro deletar mensagens relacionadas
-      await supabase
-        .from('ticket_messages')
-        .delete()
-        .eq('ticket_id', id);
-
-      // Depois deletar o ticket
       const { error } = await supabase
         .from('tickets')
         .delete()
@@ -327,44 +403,6 @@ const TicketDetail = () => {
   const filteredContacts = contacts.filter(contact => 
     !form.watch('company_id') || contact.company_id === form.watch('company_id')
   );
-
-  const addMessage = async () => {
-    if (!newMessage.trim() || !user) return;
-
-    try {
-      const { error } = await supabase
-        .from('ticket_messages')
-        .insert({
-          ticket_id: id!,
-          created_by: user.id,
-          content: newMessage.trim(),
-          is_internal: false,
-          channel: 'manual' as Database['public']['Enums']['communication_channel'],
-          sender_type: 'support_agent',
-          sender_name: user.email || 'Agente',
-          sender_email: user.email,
-        });
-
-      if (error) {
-        console.error('Erro ao inserir mensagem:', error);
-        throw error;
-      }
-
-      setNewMessage('');
-      fetchMessages();
-      toast({
-        title: 'Sucesso',
-        description: 'Mensagem adicionada com sucesso',
-      });
-    } catch (error: any) {
-      console.error('Erro completo:', error);
-      toast({
-        title: 'Erro',
-        description: error.message || 'Erro ao adicionar mensagem',
-        variant: 'destructive',
-      });
-    }
-  };
 
   const updateStatus = async () => {
     if (!newStatus || newStatus === ticket?.status) return;
@@ -470,7 +508,7 @@ const TicketDetail = () => {
               Voltar
             </Link>
           </Button>
-          <h1 className="text-3xl font-bold">Ticket #{ticket.id.slice(0, 8)}</h1>
+          <h1 className="text-3xl font-bold">Ticket #{ticket.ticket_number}</h1>
         </div>
         
         <div className="flex items-center gap-2">
@@ -492,7 +530,6 @@ const TicketDetail = () => {
                 <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
                 <AlertDialogDescription>
                   Tem certeza que deseja excluir este ticket? Esta ação não pode ser desfeita.
-                  Todas as mensagens associadas também serão excluídas.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -506,342 +543,346 @@ const TicketDetail = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          {/* Detalhes do Ticket */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                {isEditing ? (
-                  <span>Editando Ticket</span>
-                ) : (
-                  <span>{ticket.title}</span>
-                )}
-                {!isEditing && getStatusBadge(ticket.status)}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {isEditing ? (
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(handleSaveEdit)} className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="title"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Título</FormLabel>
+      <div className="grid gap-6 md:grid-cols-3">
+        {/* Detalhes do Ticket */}
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <span>{ticket.title}</span>
+              {getStatusBadge(ticket.status)}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isEditing ? (
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(handleSaveEdit)} className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Título</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="category"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Categoria</FormLabel>
+                        <Select value={field.value || ""} onValueChange={field.onChange}>
                           <FormControl>
-                            <Input {...field} placeholder="Título do ticket" />
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione uma categoria" />
+                            </SelectTrigger>
                           </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="category"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Categoria</FormLabel>
-                            <Select value={field.value || ""} onValueChange={field.onChange}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Selecione uma categoria" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {categories.map((category) => (
-                                  <SelectItem key={category} value={category}>
-                                    {category}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="priority"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Prioridade</FormLabel>
-                            <Select value={field.value} onValueChange={field.onChange}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="low">Baixa</SelectItem>
-                                <SelectItem value="medium">Média</SelectItem>
-                                <SelectItem value="high">Alta</SelectItem>
-                                <SelectItem value="urgent">Urgente</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="company_id"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Empresa</FormLabel>
-                            <Select value={field.value || ""} onValueChange={field.onChange}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Selecione uma empresa" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {companies.map((company) => (
-                                  <SelectItem key={company.id} value={company.id}>
-                                    {company.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="contact_id"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Contato</FormLabel>
-                            <Select value={field.value || ""} onValueChange={field.onChange}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Selecione um contato" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {filteredContacts.map((contact) => (
-                                  <SelectItem key={contact.id} value={contact.id}>
-                                    {contact.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="equipment_model_id"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Equipamento</FormLabel>
-                            <Select value={field.value || ""} onValueChange={field.onChange}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Selecione um equipamento" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {equipmentModels.map((model) => (
-                                  <SelectItem key={model.id} value={model.id}>
-                                    {model.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="serial_number"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Serial do Equipamento</FormLabel>
-                            <FormControl>
-                              <Input {...field} placeholder="Número de série" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <div className="flex items-center gap-2 pt-4">
-                      <Button type="submit" disabled={editLoading}>
-                        <Save className="mr-2 h-4 w-4" />
-                        {editLoading ? 'Salvando...' : 'Salvar'}
-                      </Button>
-                      <Button type="button" variant="outline" onClick={handleCancelEdit}>
-                        <X className="mr-2 h-4 w-4" />
-                        Cancelar
-                      </Button>
-                    </div>
-                  </form>
-                </Form>
-              ) : (
-                <>
-                  <p className="text-muted-foreground">{ticket.description}</p>
-                  
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div className="flex items-center gap-2">
-                      <Building2 className="h-4 w-4" />
-                      <span>{ticket.companies?.name || 'N/A'}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Tag className="h-4 w-4" />
-                      <span>{ticket.category || 'N/A'}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4" />
-                      <span>{new Date(ticket.created_at).toLocaleString('pt-BR')}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4" />
-                      <Badge variant="outline">{ticket.priority}</Badge>
-                    </div>
-                    {ticket.contacts?.name && (
-                      <div className="flex items-center gap-2">
-                        <User className="h-4 w-4" />
-                        <span><strong>Contato:</strong> {ticket.contacts.name}</span>
-                      </div>
+                          <SelectContent>
+                            {categories.map((category) => (
+                              <SelectItem key={category} value={category}>
+                                {category}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
                     )}
-                    {ticket.equipment_models?.name && (
-                      <div className="flex items-center gap-2">
-                        <Wrench className="h-4 w-4" />
-                        <span>{ticket.equipment_models.name}</span>
-                      </div>
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="priority"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Prioridade</FormLabel>
+                        <Select value={field.value} onValueChange={field.onChange}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="low">Baixa</SelectItem>
+                            <SelectItem value="medium">Média</SelectItem>
+                            <SelectItem value="high">Alta</SelectItem>
+                            <SelectItem value="urgent">Urgente</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
                     )}
-                    {ticket.serial_number && (
-                      <div className="flex items-center gap-2">
-                        <Hash className="h-4 w-4" />
-                        <span>{ticket.serial_number}</span>
-                      </div>
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="company_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Empresa</FormLabel>
+                        <Select value={field.value || ""} onValueChange={field.onChange}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione uma empresa" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {companies.map((company) => (
+                              <SelectItem key={company.id} value={company.id}>
+                                {company.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
                     )}
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4" />
-                      <span>
-                        <strong>Responsável:</strong> {ticket.assigned_user?.full_name || 'Não atribuído'}
-                      </span>
-                    </div>
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="contact_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Contato</FormLabel>
+                        <Select value={field.value || ""} onValueChange={field.onChange}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione um contato" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {filteredContacts.map((contact) => (
+                              <SelectItem key={contact.id} value={contact.id}>
+                                {contact.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="equipment_model_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Equipamento</FormLabel>
+                        <Select value={field.value || ""} onValueChange={field.onChange}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione um equipamento" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {equipmentModels.map((model) => (
+                              <SelectItem key={model.id} value={model.id}>
+                                {model.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="serial_number"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Número de Série</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="flex gap-2">
+                    <Button type="submit" disabled={editLoading}>
+                      <Save className="mr-2 h-4 w-4" />
+                      {editLoading ? 'Salvando...' : 'Salvar'}
+                    </Button>
+                    <Button type="button" variant="outline" onClick={handleCancelEdit}>
+                      <X className="mr-2 h-4 w-4" />
+                      Cancelar
+                    </Button>
                   </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Mensagens */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Histórico de Mensagens</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {messages.map((message) => (
-                <div key={message.id} className="border rounded p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4" />
-                       <span className="font-medium">
-                          {message.sender_name || 'Sistema'}
-                        </span>
-                      {message.is_internal && (
-                        <Badge variant="outline" className="text-xs">Interno</Badge>
-                      )}
-                    </div>
-                    <span className="text-sm text-muted-foreground">
-                      {new Date(message.created_at).toLocaleString('pt-BR')}
-                    </span>
+                </form>
+              </Form>
+            ) : (
+              <div className="space-y-4">
+                {ticket.description && (
+                  <div>
+                    <Label className="text-sm font-medium">Descrição</Label>
+                    <p className="text-sm text-muted-foreground mt-1">{ticket.description}</p>
                   </div>
-                  <p className="whitespace-pre-wrap">{message.content}</p>
+                )}
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm font-medium">Categoria</Label>
+                    <p className="text-sm text-muted-foreground">{ticket.category || 'Não definida'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Prioridade</Label>
+                    <p className="text-sm text-muted-foreground">
+                      {ticket.priority === 'low' && 'Baixa'}
+                      {ticket.priority === 'medium' && 'Média'}
+                      {ticket.priority === 'high' && 'Alta'}
+                      {ticket.priority === 'urgent' && 'Urgente'}
+                    </p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Empresa</Label>
+                    <p className="text-sm text-muted-foreground">{ticket.companies?.name || 'Não especificada'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Contato</Label>
+                    <p className="text-sm text-muted-foreground">{ticket.contacts?.name || 'Não especificado'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Equipamento</Label>
+                    <p className="text-sm text-muted-foreground">{ticket.equipment_models?.name || 'Não especificado'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Número de Série</Label>
+                    <p className="text-sm text-muted-foreground">{ticket.serial_number || 'Não informado'}</p>
+                  </div>
                 </div>
-              ))}
-              
-              {messages.length === 0 && (
-                <p className="text-center text-muted-foreground py-8">
-                  Nenhuma mensagem ainda
-                </p>
-              )}
-            </CardContent>
-          </Card>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-          {/* Nova Mensagem */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Adicionar Resposta</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="message">Mensagem</Label>
+        {/* Ticket Log Section */}
+        <Card className="col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 justify-between">
+              <span className="flex items-center gap-2">
+                <MessageSquare className="h-5 w-5" />
+                Log do Ticket
+              </span>
+              <div className="flex gap-2">
+                <Button onClick={exportLog} variant="outline" size="sm">
+                  <Download className="h-4 w-4 mr-2" />
+                  Exportar TXT
+                </Button>
+                {!showCreateRMA && (
+                  <Button onClick={() => setShowCreateRMA(true)} variant="outline" size="sm">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Criar RMA
+                  </Button>
+                )}
+              </div>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Existing Log */}
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+              {!ticket?.ticket_log ? (
+                <p className="text-muted-foreground text-center py-4">
+                  Nenhuma entrada no log ainda
+                </p>
+              ) : (
+                <div className="p-3 bg-muted rounded-lg">
+                  <pre className="text-sm whitespace-pre-wrap font-mono">
+                    {ticket.ticket_log}
+                  </pre>
+                </div>
+              )}
+            </div>
+            
+            {/* Add New Log Entry */}
+            <div className="space-y-2">
+              <Label>Adicionar nova entrada ao log:</Label>
+              <div className="flex gap-2">
                 <Textarea
-                  id="message"
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder="Digite sua resposta..."
-                  rows={4}
+                  placeholder="Descreva o que foi feito, descoberto ou tentado..."
+                  value={newLogEntry}
+                  onChange={(e) => setNewLogEntry(e.target.value)}
+                  className="flex-1"
+                  rows={3}
                 />
               </div>
-              <Button onClick={addMessage} disabled={!newMessage.trim()}>
-                Enviar Resposta
+              <Button onClick={addLogEntry} disabled={!newLogEntry.trim()}>
+                <Plus className="h-4 w-4 mr-2" />
+                Adicionar Entrada
               </Button>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
 
-        {/* Ações */}
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Ações</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="status">Alterar Status</Label>
+            {/* Create RMA Section */}
+            {showCreateRMA && (
+              <div className="border-t pt-4 space-y-3">
+                <Label>Criar RMA para este ticket:</Label>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Número do RMA"
+                    value={rmaNumber}
+                    onChange={(e) => setRmaNumber(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button onClick={createRMA} disabled={!rmaNumber.trim()}>
+                    Criar RMA
+                  </Button>
+                  <Button 
+                    onClick={() => setShowCreateRMA(false)} 
+                    variant="outline"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Informações Laterais */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Ações</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label className="text-sm font-medium">Status</Label>
+              <div className="flex gap-2 mt-1">
                 <Select value={newStatus} onValueChange={(value) => setNewStatus(value as Database['public']['Enums']['ticket_status'])}>
-                  <SelectTrigger>
+                  <SelectTrigger className="flex-1">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="open">Aberto</SelectItem>
                     <SelectItem value="in_progress">Em Andamento</SelectItem>
-                    <SelectItem value="paused">Pausado</SelectItem>
+                    <SelectItem value="pending_customer">Aguardando Cliente</SelectItem>
+                    <SelectItem value="resolved">Resolvido</SelectItem>
                     <SelectItem value="closed">Fechado</SelectItem>
                   </SelectContent>
                 </Select>
+                <Button onClick={updateStatus} size="sm" disabled={newStatus === ticket.status}>
+                  Atualizar
+                </Button>
               </div>
-              
-              <Button 
-                onClick={updateStatus} 
-                disabled={newStatus === ticket.status}
-                className="w-full"
-              >
-                Atualizar Status
-              </Button>
-              
-              <Separator />
-              
-              <div>
-                <Label htmlFor="assigned_to">Atribuir Responsável</Label>
+            </div>
+
+            <div>
+              <Label className="text-sm font-medium">Responsável</Label>
+              <div className="flex gap-2 mt-1">
                 <Select value={newAssignedTo} onValueChange={setNewAssignedTo}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione um responsável" />
+                  <SelectTrigger className="flex-1">
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="unassigned">Sem atribuição</SelectItem>
+                    <SelectItem value="unassigned">Não atribuído</SelectItem>
                     {users.map((user) => (
                       <SelectItem key={user.user_id} value={user.user_id}>
                         {user.full_name || 'Usuário sem nome'}
@@ -849,35 +890,47 @@ const TicketDetail = () => {
                     ))}
                   </SelectContent>
                 </Select>
+                <Button onClick={updateAssignedTo} size="sm" disabled={newAssignedTo === (ticket.assigned_to || 'unassigned')}>
+                  Atualizar
+                </Button>
               </div>
-              
-              <Button 
-                onClick={updateAssignedTo} 
-                disabled={newAssignedTo === (ticket.assigned_to || 'unassigned')}
-                className="w-full"
-              >
-                Atualizar Responsável
-              </Button>
-            </CardContent>
-          </Card>
+            </div>
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Informações</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              <div>
-                <strong>Canal:</strong> {ticket.channel}
+        {/* Informações */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Informações</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm">
+                <Clock className="h-4 w-4" />
+                <span className="font-medium">Criado em:</span>
+                <span className="text-muted-foreground">
+                  {new Date(ticket.created_at).toLocaleString('pt-BR')}
+                </span>
               </div>
-              <div>
-                <strong>Criado:</strong> {new Date(ticket.created_at).toLocaleString('pt-BR')}
+              <div className="flex items-center gap-2 text-sm">
+                <Clock className="h-4 w-4" />
+                <span className="font-medium">Atualizado em:</span>
+                <span className="text-muted-foreground">
+                  {new Date(ticket.updated_at).toLocaleString('pt-BR')}
+                </span>
               </div>
-              <div>
-                <strong>Atualizado:</strong> {new Date(ticket.updated_at).toLocaleString('pt-BR')}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              {ticket.assigned_user && (
+                <div className="flex items-center gap-2 text-sm">
+                  <User className="h-4 w-4" />
+                  <span className="font-medium">Responsável:</span>
+                  <span className="text-muted-foreground">
+                    {ticket.assigned_user.full_name}
+                  </span>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
