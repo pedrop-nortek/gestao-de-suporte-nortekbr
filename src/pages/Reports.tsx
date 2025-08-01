@@ -415,101 +415,200 @@ export const Reports = () => {
         </Card>
       </div>
 
-      {/* Gráficos principais */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-        {/* Gráfico de pizza - Status */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <PieChart className="h-4 w-4" />
-              Tickets por Status
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer config={chartConfig} className="h-[350px] flex items-center justify-center">
-              <ResponsiveContainer width="100%" height="100%">
-                <RechartsPieChart>
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Pie
-                    data={data.ticketsByStatus}
-                    dataKey="value"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius="80%"
-                    innerRadius="40%"
-                  >
-                    {data.ticketsByStatus.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                </RechartsPieChart>
-              </ResponsiveContainer>
-            </ChartContainer>
-          </CardContent>
-        </Card>
+      {/* Gráficos de pizza - dois por linha */}
+      <div className="space-y-8">
+        {/* Primeira linha: Status e Prioridade */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <PieChart className="h-4 w-4" />
+                Tickets por Status
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex justify-center">
+              <div className="w-full max-w-[400px] h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RechartsPieChart>
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Pie
+                      data={data.ticketsByStatus}
+                      dataKey="value"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={100}
+                      innerRadius={50}
+                    >
+                      {data.ticketsByStatus.map((entry, index) => (
+                        <Cell key={`status-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                  </RechartsPieChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
 
-        {/* Gráfico de pizza - Prioridade */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <AlertCircle className="h-4 w-4" />
-              Tickets por Prioridade
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer config={chartConfig} className="h-[350px] flex items-center justify-center">
-              <ResponsiveContainer width="100%" height="100%">
-                <RechartsPieChart>
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Pie
-                    data={data.ticketsByPriority}
-                    dataKey="value"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius="80%"
-                    innerRadius="40%"
-                  >
-                    {data.ticketsByPriority.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                </RechartsPieChart>
-              </ResponsiveContainer>
-            </ChartContainer>
-          </CardContent>
-        </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <AlertCircle className="h-4 w-4" />
+                Tickets por Prioridade
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex justify-center">
+              <div className="w-full max-w-[400px] h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RechartsPieChart>
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Pie
+                      data={data.ticketsByPriority}
+                      dataKey="value"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={100}
+                      innerRadius={50}
+                    >
+                      {data.ticketsByPriority.map((entry, index) => (
+                        <Cell key={`priority-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                  </RechartsPieChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
-        {/* Gráfico de pizza - Empresas */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Building2 className="h-4 w-4" />
-              Tickets por Empresa
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer config={chartConfig} className="h-[350px] flex items-center justify-center">
-              <ResponsiveContainer width="100%" height="100%">
-                <RechartsPieChart>
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Pie
-                    data={data.ticketsByCompany}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius="80%"
-                    innerRadius="40%"
-                  >
-                    {data.ticketsByCompany.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={getChartColor(index)} />
-                    ))}
-                  </Pie>
-                </RechartsPieChart>
-              </ResponsiveContainer>
-            </ChartContainer>
-          </CardContent>
-        </Card>
+        {/* Segunda linha: Empresa e Categoria */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Building2 className="h-4 w-4" />
+                Tickets por Empresa
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex justify-center">
+              <div className="w-full max-w-[400px] h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RechartsPieChart>
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Pie
+                      data={data.ticketsByCompany}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={100}
+                      innerRadius={50}
+                    >
+                      {data.ticketsByCompany.map((entry, index) => (
+                        <Cell key={`company-${index}`} fill={getChartColor(index)} />
+                      ))}
+                    </Pie>
+                  </RechartsPieChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Tag className="h-4 w-4" />
+                Tickets por Categoria
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex justify-center">
+              <div className="w-full max-w-[400px] h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RechartsPieChart>
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Pie
+                      data={data.ticketsByCategory}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={100}
+                      innerRadius={50}
+                    >
+                      {data.ticketsByCategory.map((entry, index) => (
+                        <Cell key={`category-${index}`} fill={getChartColor(index)} />
+                      ))}
+                    </Pie>
+                  </RechartsPieChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Terceira linha: Equipamento e Responsável */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Wrench className="h-4 w-4" />
+                Tickets por Equipamento
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex justify-center">
+              <div className="w-full max-w-[400px] h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RechartsPieChart>
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Pie
+                      data={data.ticketsByEquipment}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={100}
+                      innerRadius={50}
+                    >
+                      {data.ticketsByEquipment.map((entry, index) => (
+                        <Cell key={`equipment-${index}`} fill={getChartColor(index)} />
+                      ))}
+                    </Pie>
+                  </RechartsPieChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Tickets por Responsável
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex justify-center">
+              <div className="w-full max-w-[400px] h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RechartsPieChart>
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Pie
+                      data={data.ticketsByUser}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={100}
+                      innerRadius={50}
+                    >
+                      {data.ticketsByUser.map((entry, index) => (
+                        <Cell key={`user-${index}`} fill={getChartColor(index)} />
+                      ))}
+                    </Pie>
+                  </RechartsPieChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* Gráfico de evolução semanal */}
@@ -588,105 +687,8 @@ export const Reports = () => {
         </CardContent>
       </Card>
 
-      {/* Gráficos secundários */}
+      {/* Resumo estatístico */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-        {/* Gráfico de pizza - Categoria */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Tag className="h-4 w-4" />
-              Tickets por Categoria
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer config={chartConfig} className="h-[350px] flex items-center justify-center">
-              <ResponsiveContainer width="100%" height="100%">
-                <RechartsPieChart>
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Pie
-                    data={data.ticketsByCategory}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius="80%"
-                    innerRadius="40%"
-                  >
-                    {data.ticketsByCategory.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={getChartColor(index)} />
-                    ))}
-                  </Pie>
-                </RechartsPieChart>
-              </ResponsiveContainer>
-            </ChartContainer>
-          </CardContent>
-        </Card>
-
-        {/* Gráfico de pizza - Equipamento */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Wrench className="h-4 w-4" />
-              Tickets por Equipamento
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer config={chartConfig} className="h-[350px] flex items-center justify-center">
-              <ResponsiveContainer width="100%" height="100%">
-                <RechartsPieChart>
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Pie
-                    data={data.ticketsByEquipment}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius="80%"
-                    innerRadius="40%"
-                  >
-                    {data.ticketsByEquipment.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={getChartColor(index)} />
-                    ))}
-                  </Pie>
-                </RechartsPieChart>
-              </ResponsiveContainer>
-            </ChartContainer>
-          </CardContent>
-        </Card>
-
-        {/* Gráfico de pizza - Responsável */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Tickets por Responsável
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer config={chartConfig} className="h-[350px] flex items-center justify-center">
-              <ResponsiveContainer width="100%" height="100%">
-                <RechartsPieChart>
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Pie
-                    data={data.ticketsByUser}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius="80%"
-                    innerRadius="40%"
-                  >
-                    {data.ticketsByUser.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={getChartColor(index)} />
-                    ))}
-                  </Pie>
-                </RechartsPieChart>
-              </ResponsiveContainer>
-            </ChartContainer>
-          </CardContent>
-        </Card>
-
-        {/* Resumo estatístico */}
         <Card>
           <CardHeader>
             <CardTitle>Resumo Estatístico</CardTitle>
