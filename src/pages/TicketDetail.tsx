@@ -36,7 +36,7 @@ const TicketDetail = () => {
   const [loading, setLoading] = useState(true);
   const [newMessage, setNewMessage] = useState('');
   const [newStatus, setNewStatus] = useState<Database['public']['Enums']['ticket_status']>('open');
-  const [newAssignedTo, setNewAssignedTo] = useState<string>('');
+  const [newAssignedTo, setNewAssignedTo] = useState<string>('unassigned');
 
   useEffect(() => {
     if (id) {
@@ -61,7 +61,7 @@ const TicketDetail = () => {
       if (error) throw error;
       setTicket(data);
       setNewStatus(data.status);
-      setNewAssignedTo(data.assigned_to || '');
+      setNewAssignedTo(data.assigned_to || 'unassigned');
     } catch (error) {
       toast({
         title: 'Erro',
@@ -181,7 +181,7 @@ const TicketDetail = () => {
     try {
       const { error } = await supabase
         .from('tickets')
-        .update({ assigned_to: newAssignedTo || null })
+        .update({ assigned_to: newAssignedTo === 'unassigned' ? null : newAssignedTo })
         .eq('id', id);
 
       if (error) throw error;
@@ -405,7 +405,7 @@ const TicketDetail = () => {
                     <SelectValue placeholder="Selecione um responsável" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Sem atribuição</SelectItem>
+                    <SelectItem value="unassigned">Sem atribuição</SelectItem>
                     {users.map((user) => (
                       <SelectItem key={user.user_id} value={user.user_id}>
                         {user.full_name || 'Usuário sem nome'}
@@ -417,7 +417,7 @@ const TicketDetail = () => {
               
               <Button 
                 onClick={updateAssignedTo} 
-                disabled={newAssignedTo === ticket.assigned_to}
+                disabled={newAssignedTo === (ticket.assigned_to || 'unassigned')}
                 className="w-full"
               >
                 Atualizar Responsável

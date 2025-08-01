@@ -58,7 +58,7 @@ export const NewTicket = () => {
     priority: 'medium',
     equipment_model: '',
     serial_number: '',
-    assigned_to: '',
+    assigned_to: 'unassigned',
   });
 
   useEffect(() => {
@@ -148,7 +148,7 @@ export const NewTicket = () => {
           priority: formData.priority,
           equipment_model: formData.equipment_model || null,
           serial_number: formData.serial_number || null,
-          assigned_to: formData.assigned_to || null,
+          assigned_to: formData.assigned_to === 'unassigned' ? null : formData.assigned_to,
           created_by: user.id,
           status: 'open',
           responsibility: 'internal_support',
@@ -313,7 +313,7 @@ export const NewTicket = () => {
                   <SelectValue placeholder="Selecione um responsável (opcional)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Sem atribuição</SelectItem>
+                  <SelectItem value="unassigned">Sem atribuição</SelectItem>
                   {users.map((user) => (
                     <SelectItem key={user.user_id} value={user.user_id}>
                       {user.full_name || 'Usuário sem nome'}
