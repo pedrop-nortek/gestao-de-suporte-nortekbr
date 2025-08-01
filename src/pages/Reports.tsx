@@ -23,7 +23,7 @@ interface ExtendedReportData {
   ticketsByCategory: Array<{ name: string; value: number }>;
   ticketsByEquipment: Array<{ name: string; value: number }>;
   ticketsByUser: Array<{ name: string; value: number }>;
-  ticketsOverTime: Array<{ week: string; weekDetail: string; tickets: number }>;
+  ticketsOverTime: Array<{ week: string; weekDetail: string; tickets: number; weekIndex: number; weekOfMonth: number }>;
 }
 
 const chartConfig = {
@@ -241,6 +241,7 @@ export const Reports = () => {
       let currentWeek = startOfWeek(weeklyStartDate, { weekStartsOn: 0 });
       const weeklyEndDate = endOfWeek(now, { weekStartsOn: 0 });
       
+      let weekIndex = 0;
       while (currentWeek <= weeklyEndDate) {
         const weekStart = currentWeek;
         const weekEnd = endOfWeek(currentWeek, { weekStartsOn: 0 });
@@ -254,14 +255,19 @@ export const Reports = () => {
         const firstDayOfMonth = new Date(weekStart.getFullYear(), weekStart.getMonth(), 1);
         const weekOfMonth = Math.max(1, Math.ceil((weekStart.getDate() - firstDayOfMonth.getDate() + firstDayOfMonth.getDay()) / 7));
         
-        // Usar apenas mês/ano como label do eixo, mas manter info da semana para o tooltip
+        // Mostrar nome do mês apenas na semana 2 ou 3 (centro do mês)
+        const monthLabel = (weekOfMonth === 2 || weekOfMonth === 3) ? format(weekStart, 'MMM/yy', { locale: ptBR }) : '';
+        
         ticketsOverTime.push({
-          week: format(weekStart, 'MMM/yy', { locale: ptBR }),
+          week: monthLabel,
           weekDetail: `S${weekOfMonth} ${format(weekStart, 'MMM/yy', { locale: ptBR })}`,
-          tickets: weekTickets
+          tickets: weekTickets,
+          weekIndex: weekIndex,
+          weekOfMonth: weekOfMonth
         });
         
         currentWeek = addWeeks(currentWeek, 1);
+        weekIndex++;
       }
 
       const avgResolutionTime = 2.5; // Placeholder
@@ -508,13 +514,19 @@ export const Reports = () => {
           <CardContent>
             <ChartContainer config={chartConfig} className="h-[400px]">
               <LineChart data={data.ticketsOverTime}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={true} horizontal={false} />
+                <CartesianGrid 
+                  strokeDasharray="3 3" 
+                  stroke="hsl(var(--border))" 
+                  vertical={true} 
+                  horizontal={false}
+                />
                 <XAxis 
                   dataKey="week" 
                   angle={-45}
                   textAnchor="end"
                   height={80}
-                  interval={3}
+                  interval={0}
+                  tick={{ fontSize: 12 }}
                 />
                 <YAxis />
                 <ChartTooltip 
