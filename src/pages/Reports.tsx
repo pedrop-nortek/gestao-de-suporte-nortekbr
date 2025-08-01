@@ -255,8 +255,8 @@ export const Reports = () => {
         const firstDayOfMonth = new Date(weekStart.getFullYear(), weekStart.getMonth(), 1);
         const weekOfMonth = Math.max(1, Math.ceil((weekStart.getDate() - firstDayOfMonth.getDate() + firstDayOfMonth.getDay()) / 7));
         
-        // Mostrar nome do mês apenas na semana 2 ou 3 (centro do mês)
-        const monthLabel = (weekOfMonth === 2 || weekOfMonth === 3) ? format(weekStart, 'MMM/yy', { locale: ptBR }) : '';
+        // Mostrar nome do mês apenas na semana 2 (centro do mês)
+        const monthLabel = weekOfMonth === 2 ? format(weekStart, 'MMM/yy', { locale: ptBR }) : '';
         
         ticketsOverTime.push({
           week: monthLabel,
