@@ -109,13 +109,17 @@ export function MultiSelect({
   const hasSpecificSelections = selectedValues.length > 0 && !isAllSelected
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
           role="combobox"
           aria-expanded={open}
           className={cn("justify-between", className)}
+          onClick={(e) => {
+            e.preventDefault();
+            setOpen(!open);
+          }}
         >
           {getDisplayText()}
           <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />

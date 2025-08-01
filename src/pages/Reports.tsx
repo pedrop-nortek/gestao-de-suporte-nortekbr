@@ -7,7 +7,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/
 import { toast } from '@/hooks/use-toast';
 import { BarChart3, Clock, CheckCircle, AlertCircle, PieChart, TrendingUp, Users, Building2, Wrench, Tag, Filter } from 'lucide-react';
 import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, LineChart, Line, CartesianGrid } from 'recharts';
-import { format, startOfMonth, endOfMonth, startOfYear, endOfYear, parseISO, startOfWeek, endOfWeek, addWeeks } from 'date-fns';
+import { format, startOfMonth, endOfMonth, startOfYear, endOfYear, parseISO, startOfWeek, endOfWeek, addWeeks, addMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 interface ExtendedReportData {
@@ -273,14 +273,37 @@ export const Reports = () => {
         .sort((a, b) => b.value - a.value)
         .slice(0, 8);
 
-      // Evolução temporal semanal (últimos 12 meses) - 4 semanas por mês
+      // Evolução temporal semanal baseada nos filtros selecionados
       const ticketsOverTime = [];
-      const now = new Date();
       
-      for (let i = 11; i >= 0; i--) {
-        const monthDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        const monthStart = startOfMonth(monthDate);
-        const monthEnd = endOfMonth(monthDate);
+      // Determinar o período baseado nos filtros
+      const isAllYears = selectedYears.includes('all');
+      const isAllMonths = selectedMonths.includes('all');
+      
+      let startPeriod: Date;
+      let endPeriod: Date;
+      
+      if (isAllYears && isAllMonths) {
+        // Usar últimos 12 meses se não há filtros específicos
+        const now = new Date();
+        startPeriod = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+        endPeriod = new Date();
+      } else {
+        // Usar período baseado nos filtros
+        const { startDate, endDate } = getDateFilter();
+        startPeriod = parseISO(startDate);
+        endPeriod = parseISO(endDate);
+      }
+      
+      // Gerar semanas baseadas no período filtrado
+      const startMonth = startOfMonth(startPeriod);
+      const endMonth = endOfMonth(endPeriod);
+      let currentMonth = startMonth;
+      
+      while (currentMonth <= endMonth) {
+        const monthStart = startOfMonth(currentMonth);
+        const monthEnd = endOfMonth(currentMonth);
+        
         
         // Dividir cada mês em exatamente 4 semanas
         for (let week = 1; week <= 4; week++) {
@@ -307,16 +330,18 @@ export const Reports = () => {
           }).length || 0;
           
           // Mostrar nome do mês apenas na semana 2 (centro do mês)
-          const monthLabel = week === 2 ? format(monthDate, 'MMM/yy', { locale: ptBR }) : '';
+          const monthLabel = week === 2 ? format(currentMonth, 'MMM/yy', { locale: ptBR }) : '';
           
           ticketsOverTime.push({
             week: monthLabel,
-            weekDetail: `S${week} ${format(monthDate, 'MMM/yy', { locale: ptBR })}`,
+            weekDetail: `S${week} ${format(currentMonth, 'MMM/yy', { locale: ptBR })}`,
             tickets: weekTickets,
-            weekIndex: (11 - i) * 4 + (week - 1),
             weekOfMonth: week
           });
         }
+        
+        // Próximo mês
+        currentMonth = addMonths(currentMonth, 1);
       }
 
       const avgResolutionTime = 2.5; // Placeholder
