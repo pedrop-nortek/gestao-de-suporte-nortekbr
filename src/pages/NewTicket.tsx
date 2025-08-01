@@ -48,6 +48,13 @@ interface ContactFormData {
   position: string;
 }
 
+interface EquipmentFormData {
+  name: string;
+  manufacturer: string;
+  category: string;
+  description: string;
+}
+
 const PREDEFINED_CATEGORIES = [
   'System integration',
   'Deployment configuration', 
@@ -68,11 +75,18 @@ export const NewTicket = () => {
   const [users, setUsers] = useState<{ id: string; full_name: string | null; user_id: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [isCreateContactOpen, setIsCreateContactOpen] = useState(false);
+  const [isCreateEquipmentOpen, setIsCreateEquipmentOpen] = useState(false);
   const [contactFormData, setContactFormData] = useState<ContactFormData>({
     name: '',
     email: '',
     phone: '',
     position: '',
+  });
+  const [equipmentFormData, setEquipmentFormData] = useState<EquipmentFormData>({
+    name: '',
+    manufacturer: '',
+    category: '',
+    description: '',
   });
   const [formData, setFormData] = useState<TicketFormData>({
     title: '',
@@ -228,6 +242,59 @@ export const NewTicket = () => {
       toast({
         title: 'Erro',
         description: error.message || 'Erro ao criar contato',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleCreateEquipment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!equipmentFormData.name.trim()) {
+      toast({
+        title: 'Erro',
+        description: 'Nome é obrigatório para criar um equipamento',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      const { data: newEquipment, error } = await supabase
+        .from('equipment_models')
+        .insert({
+          name: equipmentFormData.name.trim(),
+          manufacturer: equipmentFormData.manufacturer.trim() || null,
+          category: equipmentFormData.category.trim() || null,
+          description: equipmentFormData.description.trim() || null,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast({
+        title: 'Sucesso',
+        description: 'Equipamento criado com sucesso!',
+      });
+
+      // Refresh equipment list and select the new equipment
+      await fetchEquipmentModels();
+      setFormData(prev => ({ ...prev, equipment_model: newEquipment.name }));
+      
+      // Reset form and close dialog
+      setEquipmentFormData({
+        name: '',
+        manufacturer: '',
+        category: '',
+        description: '',
+      });
+      setIsCreateEquipmentOpen(false);
+    } catch (error: any) {
+      console.error('Erro ao criar equipamento:', error);
+      toast({
+        title: 'Erro',
+        description: error.message || 'Erro ao criar equipamento',
         variant: 'destructive',
       });
     }
@@ -480,22 +547,88 @@ export const NewTicket = () => {
 
             <div>
               <Label htmlFor="equipment_model">Modelo do Equipamento</Label>
-              <Select
-                value={formData.equipment_model}
-                onValueChange={(value) => setFormData({ ...formData, equipment_model: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione um modelo de equipamento" />
-                </SelectTrigger>
-                <SelectContent>
-                  {equipmentModels.map((model) => (
-                    <SelectItem key={model.id} value={model.name}>
-                      {model.name}
-                    </SelectItem>
-                  ))}
-                  <SelectItem value="other">Outro (especificar na descrição)</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex gap-2">
+                <Select
+                  value={formData.equipment_model}
+                  onValueChange={(value) => setFormData({ ...formData, equipment_model: value })}
+                >
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="Selecione um modelo de equipamento" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {equipmentModels.map((model) => (
+                      <SelectItem key={model.id} value={model.name}>
+                        {model.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                <Dialog open={isCreateEquipmentOpen} onOpenChange={setIsCreateEquipmentOpen}>
+                  <DialogTrigger asChild>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="icon"
+                      title="Criar novo equipamento"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Criar Novo Equipamento</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleCreateEquipment} className="space-y-4">
+                      <div>
+                        <Label htmlFor="equipment-name">Nome *</Label>
+                        <Input
+                          id="equipment-name"
+                          value={equipmentFormData.name}
+                          onChange={(e) => setEquipmentFormData({ ...equipmentFormData, name: e.target.value })}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="equipment-manufacturer">Fabricante</Label>
+                        <Input
+                          id="equipment-manufacturer"
+                          value={equipmentFormData.manufacturer}
+                          onChange={(e) => setEquipmentFormData({ ...equipmentFormData, manufacturer: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="equipment-category">Categoria</Label>
+                        <Input
+                          id="equipment-category"
+                          value={equipmentFormData.category}
+                          onChange={(e) => setEquipmentFormData({ ...equipmentFormData, category: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="equipment-description">Descrição</Label>
+                        <Textarea
+                          id="equipment-description"
+                          value={equipmentFormData.description}
+                          onChange={(e) => setEquipmentFormData({ ...equipmentFormData, description: e.target.value })}
+                        />
+                      </div>
+                      <div className="flex gap-2 justify-end">
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          onClick={() => setIsCreateEquipmentOpen(false)}
+                        >
+                          Cancelar
+                        </Button>
+                        <Button type="submit">
+                          Criar Equipamento
+                        </Button>
+                      </div>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+              </div>
             </div>
 
             <div>
