@@ -9,8 +9,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
-import { Plus, Edit, Trash2 } from 'lucide-react';
+import { Plus, Edit, Trash2, Users } from 'lucide-react';
 import { Database } from '@/integrations/supabase/types';
+import { ContactsManager } from '@/components/ContactsManager';
 
 type Company = Database['public']['Tables']['companies']['Row'];
 type CompanyInsert = Database['public']['Tables']['companies']['Insert'];
@@ -21,6 +22,7 @@ export const Companies = () => {
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
+  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [formData, setFormData] = useState<Partial<CompanyInsert>>({
     name: '',
     primary_email: '',
@@ -266,24 +268,32 @@ export const Companies = () => {
                     <TableCell>
                       {new Date(company.created_at).toLocaleDateString('pt-BR')}
                     </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleEdit(company)}
-                        >
-                          <Edit className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleDelete(company.id)}
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setSelectedCompany(company)}
+                        title="Ver contatos"
+                      >
+                        <Users className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleEdit(company)}
+                      >
+                        <Edit className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleDelete(company.id)}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -291,6 +301,23 @@ export const Companies = () => {
           )}
         </CardContent>
       </Card>
+
+      {selectedCompany && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <Button 
+              variant="outline" 
+              onClick={() => setSelectedCompany(null)}
+            >
+              ← Voltar para empresas
+            </Button>
+          </div>
+          <ContactsManager 
+            companyId={selectedCompany.id} 
+            companyName={selectedCompany.name}
+          />
+        </div>
+      )}
     </div>
   );
 };
