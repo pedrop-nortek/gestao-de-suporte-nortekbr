@@ -29,6 +29,7 @@ import { Database } from '@/integrations/supabase/types';
 type Ticket = Database['public']['Tables']['tickets']['Row'] & {
   companies: { name: string } | null;
   assigned_user: { full_name: string } | null;
+  equipment_models: { name: string } | null;
 };
 
 type UserProfile = {
@@ -41,7 +42,7 @@ type Company = {
   name: string;
 };
 
-type SortField = 'ticket_number' | 'title' | 'company' | 'priority' | 'status' | 'category' | 'created_at' | 'assigned_to';
+type SortField = 'ticket_number' | 'title' | 'company' | 'priority' | 'status' | 'category' | 'created_at' | 'assigned_to' | 'equipment_model';
 type SortDirection = 'asc' | 'desc';
 
 const Dashboard = () => {
@@ -74,7 +75,8 @@ const Dashboard = () => {
         .select(`
           *,
           companies (name),
-          assigned_user:user_profiles!tickets_assigned_to_fkey (full_name)
+          assigned_user:user_profiles!tickets_assigned_to_fkey (full_name),
+          equipment_models (name)
         `)
         .order('created_at', { ascending: false });
 
@@ -219,6 +221,10 @@ const Dashboard = () => {
         case 'assigned_to':
           aValue = a.assigned_user?.full_name || '';
           bValue = b.assigned_user?.full_name || '';
+          break;
+        case 'equipment_model':
+          aValue = a.equipment_models?.name || '';
+          bValue = b.equipment_models?.name || '';
           break;
         case 'ticket_number':
           aValue = a.ticket_number;
@@ -410,6 +416,11 @@ const Dashboard = () => {
                   </Button>
                 </TableHead>
                 <TableHead>
+                  <Button variant="ghost" onClick={() => handleSort('equipment_model')} className="h-auto p-0">
+                    Equipamento {getSortIcon('equipment_model')}
+                  </Button>
+                </TableHead>
+                <TableHead>
                   <Button variant="ghost" onClick={() => handleSort('assigned_to')} className="h-auto p-0">
                     Responsável {getSortIcon('assigned_to')}
                   </Button>
@@ -431,6 +442,7 @@ const Dashboard = () => {
                   <TableCell>{getPriorityBadge(ticket.priority)}</TableCell>
                   <TableCell>{getStatusBadge(ticket.status)}</TableCell>
                   <TableCell>{ticket.category}</TableCell>
+                  <TableCell>{ticket.equipment_models?.name || 'N/A'}</TableCell>
                   <TableCell>{ticket.assigned_user?.full_name || 'Não atribuído'}</TableCell>
                   <TableCell>
                     {new Date(ticket.created_at).toLocaleDateString('pt-BR')}
