@@ -674,19 +674,6 @@ export const Reports = () => {
                   vertical={false}
                   horizontal={false}
                 />
-                {/* Linhas verticais para separar meses */}
-                {Array.from({ length: 11 }, (_, i) => (
-                  <line
-                    key={i}
-                    x1={`${((i + 1) * 4 - 0.5) * (100 / 48)}%`}
-                    y1="0%"
-                    x2={`${((i + 1) * 4 - 0.5) * (100 / 48)}%`}
-                    y2="100%"
-                    stroke="hsl(var(--border))"
-                    strokeDasharray="3 3"
-                    opacity={0.5}
-                  />
-                ))}
                 <XAxis 
                   dataKey="week" 
                   angle={-45}
