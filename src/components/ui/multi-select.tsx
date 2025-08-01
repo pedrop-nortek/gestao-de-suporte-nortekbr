@@ -28,6 +28,32 @@ export function MultiSelect({
   allOption
 }: MultiSelectProps) {
   const [open, setOpen] = React.useState(false)
+  const contentRef = React.useRef<HTMLDivElement>(null)
+
+  // Controle manual de fechamento apenas para cliques externos
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (contentRef.current && !contentRef.current.contains(event.target as Node)) {
+        setOpen(false)
+      }
+    }
+
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setOpen(false)
+      }
+    }
+
+    if (open) {
+      document.addEventListener('mousedown', handleClickOutside)
+      document.addEventListener('keydown', handleEscapeKey)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleEscapeKey)
+    }
+  }, [open])
 
   const handleSelectAll = () => {
     if (allOption) {
@@ -98,16 +124,18 @@ export function MultiSelect({
       <PopoverContent 
         className="w-[200px] p-0" 
         align="start"
-        onPointerDownOutside={() => setOpen(false)}
-        onInteractOutside={(event) => {
-          // Previne o fechamento quando clica em elementos internos
-          if (event.target instanceof Element && 
-              event.target.closest('[data-radix-popper-content-wrapper]')) {
-            event.preventDefault()
-          }
-        }}
+        onOpenAutoFocus={() => false}
+        onCloseAutoFocus={() => false}
+        onEscapeKeyDown={() => setOpen(false)}
+        onPointerDownOutside={() => {}}
+        onInteractOutside={() => {}}
       >
-        <div className="p-3 space-y-2">
+        <div 
+          ref={contentRef}
+          className="p-3 space-y-2"
+          onMouseDown={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
           <div className="flex gap-2">
             <Button
               variant="outline"
