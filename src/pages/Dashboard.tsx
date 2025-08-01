@@ -183,7 +183,9 @@ const Dashboard = () => {
       const matchesPriority = priorityFilter === 'all' || ticket.priority === priorityFilter;
       const matchesCategory = categoryFilter === 'all' || ticket.category === categoryFilter;
       const matchesCompany = companyFilter === 'all' || ticket.company_id === companyFilter;
-      const matchesAssigned = assignedFilter === 'all' || ticket.assigned_to === assignedFilter;
+      const matchesAssigned = assignedFilter === 'all' || 
+                              (assignedFilter === 'unassigned' && !ticket.assigned_to) ||
+                              ticket.assigned_to === assignedFilter;
       
       // Filter by date range
       let matchesDateRange = true;
@@ -334,7 +336,7 @@ const Dashboard = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos os Responsáveis</SelectItem>
-                <SelectItem value="">Não atribuído</SelectItem>
+                <SelectItem value="unassigned">Não atribuído</SelectItem>
                 {users.filter(user => user.full_name).map((user) => (
                   <SelectItem key={user.user_id} value={user.user_id}>
                     {user.full_name}
