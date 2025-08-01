@@ -95,7 +95,7 @@ export const NewTicket = () => {
     contact_id: '',
     category: '',
     priority: 'medium',
-    equipment_model_id: '',
+    equipment_model_id: null,
     serial_number: '',
     assigned_to: 'unassigned',
   });
@@ -321,7 +321,7 @@ export const NewTicket = () => {
           company_id: formData.company_id,
           category: formData.category,
           priority: formData.priority,
-          equipment_model_id: formData.equipment_model_id || null,
+          equipment_model_id: formData.equipment_model_id,
           serial_number: formData.serial_number || null,
           contact_id: formData.contact_id || null,
           assigned_to: formData.assigned_to === 'unassigned' ? null : formData.assigned_to,
