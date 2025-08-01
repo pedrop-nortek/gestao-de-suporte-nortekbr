@@ -250,11 +250,9 @@ export const Reports = () => {
           return ticketDate >= weekStart && ticketDate <= weekEnd;
         }).length || 0;
 
-        // Calcular número da semana no mês (1-5)
-        const weekOfMonth = Math.ceil((weekStart.getDate() + (new Date(weekStart.getFullYear(), weekStart.getMonth(), 1).getDay())) / 7);
-        
+        // Usar apenas mês/ano como label
         ticketsOverTime.push({
-          week: `S${weekOfMonth} ${format(weekStart, 'MMM/yy', { locale: ptBR })}`,
+          week: format(weekStart, 'MMM/yy', { locale: ptBR }),
           tickets: weekTickets
         });
         
@@ -510,7 +508,7 @@ export const Reports = () => {
                   angle={-45}
                   textAnchor="end"
                   height={80}
-                  interval="preserveStartEnd"
+                  interval={3}
                 />
                 <YAxis />
                 <ChartTooltip content={<ChartTooltipContent />} />
