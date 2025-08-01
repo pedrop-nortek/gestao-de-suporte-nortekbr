@@ -41,7 +41,10 @@ export function MultiSelect({
     onSelectionChange([])
   }
 
-  const handleItemToggle = (value: string) => {
+  const handleItemToggle = (value: string, event?: React.MouseEvent) => {
+    // Previne o fechamento do dropdown
+    event?.stopPropagation()
+    
     if (allOption && value === allOption.value) {
       // Se selecionou "Todos", limpa outras seleções
       onSelectionChange([allOption.value])
@@ -114,15 +117,18 @@ export function MultiSelect({
           </div>
           
           {allOption && (
-            <div className="flex items-center space-x-2 py-1">
+            <div 
+              className="flex items-center space-x-2 py-1 cursor-pointer"
+              onClick={(e) => handleItemToggle(allOption.value, e)}
+            >
               <Checkbox
                 id={`all-option`}
                 checked={isAllSelected}
-                onCheckedChange={() => handleItemToggle(allOption.value)}
+                onCheckedChange={() => {}}
               />
               <label
                 htmlFor={`all-option`}
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
               >
                 {allOption.label}
               </label>
@@ -131,15 +137,19 @@ export function MultiSelect({
           
           <div className="border-t pt-2 space-y-1">
             {items.map((item) => (
-              <div key={item.value} className="flex items-center space-x-2 py-1">
+              <div 
+                key={item.value} 
+                className="flex items-center space-x-2 py-1 cursor-pointer"
+                onClick={(e) => handleItemToggle(item.value, e)}
+              >
                 <Checkbox
                   id={item.value}
                   checked={selectedValues.includes(item.value) && !isAllSelected}
-                  onCheckedChange={() => handleItemToggle(item.value)}
+                  onCheckedChange={() => {}}
                 />
                 <label
                   htmlFor={item.value}
-                  className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                 >
                   {item.label}
                 </label>
