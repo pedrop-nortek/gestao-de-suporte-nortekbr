@@ -115,6 +115,91 @@ export type Database = {
         }
         Relationships: []
       }
+      rma_requests: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          rma_number: string
+          status: string
+          ticket_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          rma_number: string
+          status?: string
+          ticket_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          rma_number?: string
+          status?: string
+          ticket_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rma_requests_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rma_steps: {
+        Row: {
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          functionality_notes: string | null
+          id: string
+          is_completed: boolean
+          notes: string | null
+          rma_id: string
+          step_name: string
+          step_order: number
+        }
+        Insert: {
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          functionality_notes?: string | null
+          id?: string
+          is_completed?: boolean
+          notes?: string | null
+          rma_id: string
+          step_name: string
+          step_order: number
+        }
+        Update: {
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          functionality_notes?: string | null
+          id?: string
+          is_completed?: boolean
+          notes?: string | null
+          rma_id?: string
+          step_name?: string
+          step_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rma_steps_rma_id_fkey"
+            columns: ["rma_id"]
+            isOneToOne: false
+            referencedRelation: "rma_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ticket_attachments: {
         Row: {
           context_description: string | null
@@ -236,6 +321,7 @@ export type Database = {
           responsibility: Database["public"]["Enums"]["responsibility_type"]
           serial_number: string | null
           status: Database["public"]["Enums"]["ticket_status"]
+          ticket_log: string | null
           ticket_number: number
           title: string
           updated_at: string
@@ -257,6 +343,7 @@ export type Database = {
           responsibility?: Database["public"]["Enums"]["responsibility_type"]
           serial_number?: string | null
           status?: Database["public"]["Enums"]["ticket_status"]
+          ticket_log?: string | null
           ticket_number?: number
           title: string
           updated_at?: string
@@ -278,6 +365,7 @@ export type Database = {
           responsibility?: Database["public"]["Enums"]["responsibility_type"]
           serial_number?: string | null
           status?: Database["public"]["Enums"]["ticket_status"]
+          ticket_log?: string | null
           ticket_number?: number
           title?: string
           updated_at?: string
