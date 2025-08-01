@@ -95,7 +95,18 @@ export function MultiSelect({
           <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[200px] p-0" align="start">
+      <PopoverContent 
+        className="w-[200px] p-0" 
+        align="start"
+        onPointerDownOutside={() => setOpen(false)}
+        onInteractOutside={(event) => {
+          // Previne o fechamento quando clica em elementos internos
+          if (event.target instanceof Element && 
+              event.target.closest('[data-radix-popper-content-wrapper]')) {
+            event.preventDefault()
+          }
+        }}
+      >
         <div className="p-3 space-y-2">
           <div className="flex gap-2">
             <Button
