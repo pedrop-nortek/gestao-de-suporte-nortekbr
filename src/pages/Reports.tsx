@@ -516,7 +516,28 @@ export const Reports = () => {
                   interval={3}
                 />
                 <YAxis />
-                <ChartTooltip content={<ChartTooltipContent labelKey="weekDetail" />} />
+                <ChartTooltip 
+                  content={({ active, payload, label }) => {
+                    if (active && payload && payload.length) {
+                      const data = payload[0].payload;
+                      return (
+                        <div className="rounded-lg border bg-background p-2 shadow-sm">
+                          <div className="grid gap-2">
+                            <div className="flex flex-col">
+                              <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                {data.weekDetail}
+                              </span>
+                              <span className="font-bold text-muted-foreground">
+                                {payload[0].value} tickets
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
                 <Line 
                   type="monotone" 
                   dataKey="tickets" 
