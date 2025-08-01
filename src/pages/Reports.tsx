@@ -426,9 +426,9 @@ export const Reports = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="h-[350px]">
+            <ChartContainer config={chartConfig} className="h-[350px] flex items-center justify-center">
               <ResponsiveContainer width="100%" height="100%">
-                <RechartsPieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                <RechartsPieChart>
                   <ChartTooltip content={<ChartTooltipContent />} />
                   <Pie
                     data={data.ticketsByStatus}
@@ -457,9 +457,9 @@ export const Reports = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="h-[350px]">
+            <ChartContainer config={chartConfig} className="h-[350px] flex items-center justify-center">
               <ResponsiveContainer width="100%" height="100%">
-                <RechartsPieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                <RechartsPieChart>
                   <ChartTooltip content={<ChartTooltipContent />} />
                   <Pie
                     data={data.ticketsByPriority}
@@ -488,9 +488,9 @@ export const Reports = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="h-[350px]">
+            <ChartContainer config={chartConfig} className="h-[350px] flex items-center justify-center">
               <ResponsiveContainer width="100%" height="100%">
-                <RechartsPieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                <RechartsPieChart>
                   <ChartTooltip content={<ChartTooltipContent />} />
                   <Pie
                     data={data.ticketsByCompany}
@@ -599,9 +599,9 @@ export const Reports = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="h-[350px]">
+            <ChartContainer config={chartConfig} className="h-[350px] flex items-center justify-center">
               <ResponsiveContainer width="100%" height="100%">
-                <RechartsPieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                <RechartsPieChart>
                   <ChartTooltip content={<ChartTooltipContent />} />
                   <Pie
                     data={data.ticketsByCategory}
@@ -631,9 +631,9 @@ export const Reports = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="h-[350px]">
+            <ChartContainer config={chartConfig} className="h-[350px] flex items-center justify-center">
               <ResponsiveContainer width="100%" height="100%">
-                <RechartsPieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                <RechartsPieChart>
                   <ChartTooltip content={<ChartTooltipContent />} />
                   <Pie
                     data={data.ticketsByEquipment}
@@ -663,9 +663,9 @@ export const Reports = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="h-[350px]">
+            <ChartContainer config={chartConfig} className="h-[350px] flex items-center justify-center">
               <ResponsiveContainer width="100%" height="100%">
-                <RechartsPieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                <RechartsPieChart>
                   <ChartTooltip content={<ChartTooltipContent />} />
                   <Pie
                     data={data.ticketsByUser}
