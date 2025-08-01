@@ -54,11 +54,11 @@ type TicketMessage = Database['public']['Tables']['ticket_messages']['Row'];
 // Schema de validação para edição do ticket
 const editTicketSchema = z.object({
   title: z.string().min(1, 'Título é obrigatório'),
-  category: z.string().nullish().transform(val => val || undefined),
-  company_id: z.string().nullish().transform(val => val || undefined),
-  contact_id: z.string().nullish().transform(val => val || undefined),
-  equipment_model_id: z.string().nullish().transform(val => val || undefined),
-  serial_number: z.string().nullish().transform(val => val || undefined),
+  category: z.string().optional(),
+  company_id: z.string().optional(),
+  contact_id: z.string().optional(),
+  equipment_model_id: z.string().optional(),
+  serial_number: z.string().optional(),
   priority: z.enum(['low', 'medium', 'high', 'urgent']),
 });
 
@@ -108,18 +108,11 @@ const TicketDetail = () => {
 
   useEffect(() => {
     if (id) {
-      console.log('Starting data fetch for ticket ID:', id);
-      Promise.all([
-        fetchTicketDetails(),
-        fetchMessages(),
-        fetchUsers(),
-        fetchCompanies(),
-        fetchContacts(),
-        fetchEquipmentModels()
-      ]).catch(error => {
-        console.error('Error in data fetching:', error);
-        setLoading(false);
-      });
+      fetchTicketDetails();
+      fetchUsers();
+      fetchCompanies();
+      fetchContacts();
+      fetchEquipmentModels();
     }
   }, [id]);
 
@@ -140,8 +133,6 @@ const TicketDetail = () => {
 
   const fetchTicketDetails = async () => {
     try {
-      console.log('Fetching ticket details for ID:', id);
-      
       const { data, error } = await supabase
         .from('tickets')
         .select(`
@@ -152,24 +143,22 @@ const TicketDetail = () => {
           contacts (name)
         `)
         .eq('id', id)
-        .single();
+        .maybeSingle();
 
-      if (error) {
-        console.error('Ticket query error:', error);
-        throw error;
+      if (error) throw error;
+      
+      if (data) {
+        const ticketData = {
+          ...data,
+          assigned_user: data.user_profiles
+        };
+        
+        setTicket(ticketData);
+        setNewStatus(data.status);
+        setNewAssignedTo(data.assigned_to || 'unassigned');
       }
       
-      console.log('Ticket data received:', data);
-      
-      // Ajustar a estrutura dos dados
-      const ticketData = {
-        ...data,
-        assigned_user: data.user_profiles
-      };
-      
-      setTicket(ticketData);
-      setNewStatus(data.status);
-      setNewAssignedTo(data.assigned_to || 'unassigned');
+      await fetchMessages();
     } catch (error: any) {
       console.error('Error fetching ticket details:', error);
       toast({
@@ -177,34 +166,23 @@ const TicketDetail = () => {
         description: error.message || 'Erro ao carregar detalhes do ticket',
         variant: 'destructive',
       });
+    } finally {
+      setLoading(false);
     }
   };
 
   const fetchMessages = async () => {
     try {
-      console.log('Fetching messages for ticket:', id);
       const { data, error } = await supabase
         .from('ticket_messages')
         .select('*')
         .eq('ticket_id', id)
         .order('created_at', { ascending: true });
 
-      if (error) {
-        console.error('Messages query error:', error);
-        throw error;
-      }
-      
-      console.log('Messages received:', data?.length || 0);
+      if (error) throw error;
       setMessages(data || []);
     } catch (error: any) {
       console.error('Erro ao carregar mensagens:', error);
-      toast({
-        title: 'Erro',
-        description: error.message || 'Erro ao carregar mensagens',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
     }
   };
 
