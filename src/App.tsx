@@ -14,6 +14,8 @@ import TicketDetail from "./pages/TicketDetail";
 import { NewTicket } from "./pages/NewTicket";
 import { Companies } from "./pages/Companies";
 import EquipmentModels from "./pages/EquipmentModels";
+import RMAs from "./pages/RMAs";
+import RMADetail from "./pages/RMADetail";
 import { Reports } from "./pages/Reports";
 import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
