@@ -437,8 +437,8 @@ export const Reports = () => {
                         dataKey="value"
                         cx="50%"
                         cy="50%"
-                        outerRadius={100}
-                        innerRadius={50}
+                        outerRadius={130}
+                        innerRadius={65}
                       >
                         {data.ticketsByStatus.map((entry, index) => (
                           <Cell key={`status-${index}`} fill={entry.color} />
@@ -469,8 +469,8 @@ export const Reports = () => {
                         dataKey="value"
                         cx="50%"
                         cy="50%"
-                        outerRadius={100}
-                        innerRadius={50}
+                        outerRadius={130}
+                        innerRadius={65}
                       >
                         {data.ticketsByPriority.map((entry, index) => (
                           <Cell key={`priority-${index}`} fill={entry.color} />
@@ -505,8 +505,8 @@ export const Reports = () => {
                         nameKey="name"
                         cx="50%"
                         cy="50%"
-                        outerRadius={100}
-                        innerRadius={50}
+                        outerRadius={130}
+                        innerRadius={65}
                       >
                         {data.ticketsByCompany.map((entry, index) => (
                           <Cell key={`company-${index}`} fill={getChartColor(index)} />
@@ -538,8 +538,8 @@ export const Reports = () => {
                         nameKey="name"
                         cx="50%"
                         cy="50%"
-                        outerRadius={100}
-                        innerRadius={50}
+                        outerRadius={130}
+                        innerRadius={65}
                       >
                         {data.ticketsByCategory.map((entry, index) => (
                           <Cell key={`category-${index}`} fill={getChartColor(index)} />
@@ -574,8 +574,8 @@ export const Reports = () => {
                         nameKey="name"
                         cx="50%"
                         cy="50%"
-                        outerRadius={100}
-                        innerRadius={50}
+                        outerRadius={130}
+                        innerRadius={65}
                       >
                         {data.ticketsByEquipment.map((entry, index) => (
                           <Cell key={`equipment-${index}`} fill={getChartColor(index)} />
@@ -607,8 +607,8 @@ export const Reports = () => {
                         nameKey="name"
                         cx="50%"
                         cy="50%"
-                        outerRadius={100}
-                        innerRadius={50}
+                        outerRadius={130}
+                        innerRadius={65}
                       >
                         {data.ticketsByUser.map((entry, index) => (
                           <Cell key={`user-${index}`} fill={getChartColor(index)} />
