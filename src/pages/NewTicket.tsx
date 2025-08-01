@@ -13,23 +13,39 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ArrowLeft } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { ArrowLeft, Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { Database } from '@/integrations/supabase/types';
 
 type Company = Database['public']['Tables']['companies']['Row'];
+type Contact = Database['public']['Tables']['contacts']['Row'];
 
 interface TicketFormData {
   title: string;
   description: string;
   company_id: string;
+  contact_id: string;
   category: string;
   priority: Database['public']['Enums']['ticket_priority'];
   equipment_model: string;
   serial_number: string;
   assigned_to: string;
+}
+
+interface ContactFormData {
+  name: string;
+  email: string;
+  phone: string;
+  position: string;
 }
 
 const PREDEFINED_CATEGORIES = [
@@ -47,13 +63,22 @@ export const NewTicket = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [companies, setCompanies] = useState<Company[]>([]);
+  const [contacts, setContacts] = useState<Contact[]>([]);
   const [equipmentModels, setEquipmentModels] = useState<{ id: string; name: string }[]>([]);
   const [users, setUsers] = useState<{ id: string; full_name: string | null; user_id: string }[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isCreateContactOpen, setIsCreateContactOpen] = useState(false);
+  const [contactFormData, setContactFormData] = useState<ContactFormData>({
+    name: '',
+    email: '',
+    phone: '',
+    position: '',
+  });
   const [formData, setFormData] = useState<TicketFormData>({
     title: '',
     description: '',
     company_id: '',
+    contact_id: '',
     category: '',
     priority: 'medium',
     equipment_model: '',
@@ -66,6 +91,16 @@ export const NewTicket = () => {
     fetchEquipmentModels();
     fetchUsers();
   }, []);
+
+  // Fetch contacts when company changes
+  useEffect(() => {
+    if (formData.company_id) {
+      fetchContactsByCompany(formData.company_id);
+    } else {
+      setContacts([]);
+      setFormData(prev => ({ ...prev, contact_id: '' }));
+    }
+  }, [formData.company_id]);
 
   const fetchCompanies = async () => {
     try {
@@ -124,6 +159,80 @@ export const NewTicket = () => {
     }
   };
 
+  const fetchContactsByCompany = async (companyId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('contacts')
+        .select('*')
+        .eq('company_id', companyId)
+        .order('name');
+      
+      if (error) throw error;
+      setContacts(data || []);
+    } catch (error: any) {
+      console.error('Erro ao carregar contatos:', error);
+      toast({
+        title: 'Erro',
+        description: 'Erro ao carregar contatos da empresa',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleCreateContact = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!contactFormData.name.trim() || !formData.company_id) {
+      toast({
+        title: 'Erro',
+        description: 'Nome é obrigatório para criar um contato',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      const { data: newContact, error } = await supabase
+        .from('contacts')
+        .insert({
+          name: contactFormData.name.trim(),
+          email: contactFormData.email.trim() || null,
+          phone: contactFormData.phone.trim() || null,
+          position: contactFormData.position.trim() || null,
+          company_id: formData.company_id,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast({
+        title: 'Sucesso',
+        description: 'Contato criado com sucesso!',
+      });
+
+      // Refresh contacts list and select the new contact
+      await fetchContactsByCompany(formData.company_id);
+      setFormData(prev => ({ ...prev, contact_id: newContact.id }));
+      
+      // Reset form and close dialog
+      setContactFormData({
+        name: '',
+        email: '',
+        phone: '',
+        position: '',
+      });
+      setIsCreateContactOpen(false);
+    } catch (error: any) {
+      console.error('Erro ao criar contato:', error);
+      toast({
+        title: 'Erro',
+        description: error.message || 'Erro ao criar contato',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -148,6 +257,7 @@ export const NewTicket = () => {
           priority: formData.priority,
           equipment_model: formData.equipment_model || null,
           serial_number: formData.serial_number || null,
+          contact_id: formData.contact_id || null,
           assigned_to: formData.assigned_to === 'unassigned' ? null : formData.assigned_to,
           created_by: user.id,
           status: 'open',
@@ -233,6 +343,101 @@ export const NewTicket = () => {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="contact">Contato na Empresa</Label>
+              <div className="flex gap-2">
+                <Select
+                  value={formData.contact_id}
+                  onValueChange={(value) => setFormData({ ...formData, contact_id: value })}
+                  disabled={!formData.company_id}
+                >
+                  <SelectTrigger className="flex-1">
+                    <SelectValue 
+                      placeholder={
+                        formData.company_id 
+                          ? "Selecione um contato" 
+                          : "Selecione uma empresa primeiro"
+                      } 
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {contacts.map((contact) => (
+                      <SelectItem key={contact.id} value={contact.id}>
+                        {contact.name} {contact.email && `(${contact.email})`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                <Dialog open={isCreateContactOpen} onOpenChange={setIsCreateContactOpen}>
+                  <DialogTrigger asChild>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="icon"
+                      disabled={!formData.company_id}
+                      title="Criar novo contato"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Criar Novo Contato</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleCreateContact} className="space-y-4">
+                      <div>
+                        <Label htmlFor="contact-name">Nome *</Label>
+                        <Input
+                          id="contact-name"
+                          value={contactFormData.name}
+                          onChange={(e) => setContactFormData({ ...contactFormData, name: e.target.value })}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="contact-email">Email</Label>
+                        <Input
+                          id="contact-email"
+                          type="email"
+                          value={contactFormData.email}
+                          onChange={(e) => setContactFormData({ ...contactFormData, email: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="contact-phone">Telefone</Label>
+                        <Input
+                          id="contact-phone"
+                          value={contactFormData.phone}
+                          onChange={(e) => setContactFormData({ ...contactFormData, phone: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="contact-position">Cargo</Label>
+                        <Input
+                          id="contact-position"
+                          value={contactFormData.position}
+                          onChange={(e) => setContactFormData({ ...contactFormData, position: e.target.value })}
+                        />
+                      </div>
+                      <div className="flex gap-2 justify-end">
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          onClick={() => setIsCreateContactOpen(false)}
+                        >
+                          Cancelar
+                        </Button>
+                        <Button type="submit">
+                          Criar Contato
+                        </Button>
+                      </div>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+              </div>
             </div>
 
             <div>

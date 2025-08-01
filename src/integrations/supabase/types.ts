@@ -224,6 +224,7 @@ export type Database = {
           category: string | null
           channel: Database["public"]["Enums"]["communication_channel"]
           company_id: string | null
+          contact_id: string | null
           created_at: string
           created_by: string | null
           description: string | null
@@ -243,6 +244,7 @@ export type Database = {
           category?: string | null
           channel?: Database["public"]["Enums"]["communication_channel"]
           company_id?: string | null
+          contact_id?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -262,6 +264,7 @@ export type Database = {
           category?: string | null
           channel?: Database["public"]["Enums"]["communication_channel"]
           company_id?: string | null
+          contact_id?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -289,6 +292,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tickets_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
             referencedColumns: ["id"]
           },
         ]
