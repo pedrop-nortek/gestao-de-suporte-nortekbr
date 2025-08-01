@@ -190,16 +190,14 @@ const Dashboard = () => {
       // Filter by date range
       let matchesDateRange = true;
       if (startDate || endDate) {
-        const ticketDate = new Date(ticket.created_at);
-        const ticketDateOnly = new Date(ticketDate.getFullYear(), ticketDate.getMonth(), ticketDate.getDate());
+        // Extrair apenas a parte da data (YYYY-MM-DD) do timestamp do ticket
+        const ticketDateString = new Date(ticket.created_at).toISOString().split('T')[0];
         
         if (startDate) {
-          const startDateOnly = new Date(startDate);
-          matchesDateRange = matchesDateRange && ticketDateOnly >= startDateOnly;
+          matchesDateRange = matchesDateRange && ticketDateString >= startDate;
         }
         if (endDate) {
-          const endDateOnly = new Date(endDate);
-          matchesDateRange = matchesDateRange && ticketDateOnly <= endDateOnly;
+          matchesDateRange = matchesDateRange && ticketDateString <= endDate;
         }
       }
       
