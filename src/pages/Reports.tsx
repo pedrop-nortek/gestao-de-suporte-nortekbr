@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { MultiSelect } from '@/components/ui/multi-select';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { toast } from '@/hooks/use-toast';
 import { BarChart3, Clock, CheckCircle, AlertCircle, PieChart, TrendingUp, Users, Building2, Wrench, Tag, Filter } from 'lucide-react';
@@ -98,13 +98,15 @@ const getChartColor = (index: number) => CHART_COLORS[index % CHART_COLORS.lengt
 export const Reports = () => {
   const [data, setData] = useState<ExtendedReportData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
-  const [selectedMonth, setSelectedMonth] = useState<string>('all');
+  const [selectedYears, setSelectedYears] = useState<string[]>(['all']);
+  const [selectedMonths, setSelectedMonths] = useState<string[]>(['all']);
 
   const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 5 }, (_, i) => (currentYear - i).toString());
+  const years = Array.from({ length: 5 }, (_, i) => ({ 
+    value: (currentYear - i).toString(), 
+    label: (currentYear - i).toString() 
+  }));
   const months = [
-    { value: 'all', label: 'Todos os meses' },
     { value: '1', label: 'Janeiro' },
     { value: '2', label: 'Fevereiro' },
     { value: '3', label: 'Março' },
@@ -121,25 +123,62 @@ export const Reports = () => {
 
   useEffect(() => {
     fetchReportData();
-  }, [selectedYear, selectedMonth]);
+  }, [selectedYears, selectedMonths]);
 
   const getDateFilter = () => {
-    const year = parseInt(selectedYear);
-    let startDate: Date;
-    let endDate: Date;
-
-    if (selectedMonth === 'all') {
-      startDate = startOfYear(new Date(year, 0, 1));
-      endDate = endOfYear(new Date(year, 0, 1));
-    } else {
-      const month = parseInt(selectedMonth) - 1;
-      startDate = startOfMonth(new Date(year, month, 1));
-      endDate = endOfMonth(new Date(year, month, 1));
+    const isAllYears = selectedYears.includes('all');
+    const isAllMonths = selectedMonths.includes('all');
+    
+    if (isAllYears && isAllMonths) {
+      // Se todos os anos e meses estão selecionados, usar um range amplo
+      const currentYear = new Date().getFullYear();
+      return {
+        startDate: startOfYear(new Date(currentYear - 4, 0, 1)).toISOString(),
+        endDate: endOfYear(new Date(currentYear, 0, 1)).toISOString()
+      };
     }
-
+    
+    if (isAllYears) {
+      // Todos os anos, mas meses específicos
+      const currentYear = new Date().getFullYear();
+      const startYear = currentYear - 4;
+      const endYear = currentYear;
+      
+      // Para cada mês selecionado, pegar o range de todos os anos
+      const startMonths = selectedMonths.map(month => parseInt(month) - 1);
+      const minMonth = Math.min(...startMonths);
+      const maxMonth = Math.max(...startMonths);
+      
+      return {
+        startDate: startOfMonth(new Date(startYear, minMonth, 1)).toISOString(),
+        endDate: endOfMonth(new Date(endYear, maxMonth, 1)).toISOString()
+      };
+    }
+    
+    if (isAllMonths) {
+      // Anos específicos, todos os meses
+      const yearNumbers = selectedYears.map(year => parseInt(year));
+      const minYear = Math.min(...yearNumbers);
+      const maxYear = Math.max(...yearNumbers);
+      
+      return {
+        startDate: startOfYear(new Date(minYear, 0, 1)).toISOString(),
+        endDate: endOfYear(new Date(maxYear, 0, 1)).toISOString()
+      };
+    }
+    
+    // Anos e meses específicos
+    const yearNumbers = selectedYears.map(year => parseInt(year));
+    const monthNumbers = selectedMonths.map(month => parseInt(month) - 1);
+    
+    const minYear = Math.min(...yearNumbers);
+    const maxYear = Math.max(...yearNumbers);
+    const minMonth = Math.min(...monthNumbers);
+    const maxMonth = Math.max(...monthNumbers);
+    
     return {
-      startDate: startDate.toISOString(),
-      endDate: endDate.toISOString()
+      startDate: startOfMonth(new Date(minYear, minMonth, 1)).toISOString(),
+      endDate: endOfMonth(new Date(maxYear, maxMonth, 1)).toISOString()
     };
   };
 
@@ -346,28 +385,22 @@ export const Reports = () => {
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
           <Filter className="h-4 w-4 text-muted-foreground" />
           <div className="flex flex-col sm:flex-row gap-4">
-            <Select value={selectedYear} onValueChange={setSelectedYear}>
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {years.map(year => (
-                  <SelectItem key={year} value={year}>{year}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-              <SelectTrigger className="w-40">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {months.map(month => (
-                  <SelectItem key={month.value} value={month.value}>
-                    {month.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <MultiSelect
+              items={years}
+              selectedValues={selectedYears}
+              onSelectionChange={setSelectedYears}
+              placeholder="Selecionar anos..."
+              className="w-48"
+              allOption={{ value: 'all', label: 'Todos os anos' }}
+            />
+            <MultiSelect
+              items={months}
+              selectedValues={selectedMonths}
+              onSelectionChange={setSelectedMonths}
+              placeholder="Selecionar meses..."
+              className="w-52"
+              allOption={{ value: 'all', label: 'Todos os meses' }}
+            />
           </div>
         </div>
       </div>
