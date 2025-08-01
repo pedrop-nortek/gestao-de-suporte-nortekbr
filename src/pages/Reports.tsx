@@ -23,7 +23,7 @@ interface ExtendedReportData {
   ticketsByCategory: Array<{ name: string; value: number }>;
   ticketsByEquipment: Array<{ name: string; value: number }>;
   ticketsByUser: Array<{ name: string; value: number }>;
-  ticketsOverTime: Array<{ week: string; tickets: number }>;
+  ticketsOverTime: Array<{ week: string; weekDetail: string; tickets: number }>;
 }
 
 const chartConfig = {
@@ -250,9 +250,13 @@ export const Reports = () => {
           return ticketDate >= weekStart && ticketDate <= weekEnd;
         }).length || 0;
 
-        // Usar apenas mês/ano como label
+        // Calcular número da semana no mês (1-5)
+        const weekOfMonth = Math.ceil((weekStart.getDate() + (new Date(weekStart.getFullYear(), weekStart.getMonth(), 1).getDay())) / 7);
+        
+        // Usar apenas mês/ano como label do eixo, mas manter info da semana para o tooltip
         ticketsOverTime.push({
           week: format(weekStart, 'MMM/yy', { locale: ptBR }),
+          weekDetail: `S${weekOfMonth} ${format(weekStart, 'MMM/yy', { locale: ptBR })}`,
           tickets: weekTickets
         });
         
@@ -512,7 +516,7 @@ export const Reports = () => {
                   interval={3}
                 />
                 <YAxis />
-                <ChartTooltip content={<ChartTooltipContent />} />
+                <ChartTooltip content={<ChartTooltipContent labelKey="weekDetail" />} />
                 <Line 
                   type="monotone" 
                   dataKey="tickets" 
