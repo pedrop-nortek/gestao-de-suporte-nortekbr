@@ -191,15 +191,15 @@ const Dashboard = () => {
       let matchesDateRange = true;
       if (startDate || endDate) {
         const ticketDate = new Date(ticket.created_at);
+        const ticketDateOnly = new Date(ticketDate.getFullYear(), ticketDate.getMonth(), ticketDate.getDate());
+        
         if (startDate) {
-          const start = new Date(startDate);
-          start.setHours(0, 0, 0, 0);
-          matchesDateRange = matchesDateRange && ticketDate >= start;
+          const startDateOnly = new Date(startDate);
+          matchesDateRange = matchesDateRange && ticketDateOnly >= startDateOnly;
         }
         if (endDate) {
-          const end = new Date(endDate);
-          end.setHours(23, 59, 59, 999);
-          matchesDateRange = matchesDateRange && ticketDate <= end;
+          const endDateOnly = new Date(endDate);
+          matchesDateRange = matchesDateRange && ticketDateOnly <= endDateOnly;
         }
       }
       
