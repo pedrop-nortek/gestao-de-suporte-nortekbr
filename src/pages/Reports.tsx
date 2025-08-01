@@ -234,40 +234,50 @@ export const Reports = () => {
         .sort((a, b) => b.value - a.value)
         .slice(0, 8);
 
-      // Evolução temporal semanal (últimos 12 meses)
+      // Evolução temporal semanal (últimos 12 meses) - 4 semanas por mês
       const ticketsOverTime = [];
       const now = new Date();
-      const weeklyStartDate = new Date(now.getFullYear(), now.getMonth() - 11, 1);
-      let currentWeek = startOfWeek(weeklyStartDate, { weekStartsOn: 0 });
-      const weeklyEndDate = endOfWeek(now, { weekStartsOn: 0 });
       
-      let weekIndex = 0;
-      while (currentWeek <= weeklyEndDate) {
-        const weekStart = currentWeek;
-        const weekEnd = endOfWeek(currentWeek, { weekStartsOn: 0 });
+      for (let i = 11; i >= 0; i--) {
+        const monthDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const monthStart = startOfMonth(monthDate);
+        const monthEnd = endOfMonth(monthDate);
         
-        const weekTickets = tickets?.filter(ticket => {
-          const ticketDate = parseISO(ticket.created_at);
-          return ticketDate >= weekStart && ticketDate <= weekEnd;
-        }).length || 0;
-
-        // Calcular número da semana no mês (sempre começando em S1)
-        const firstDayOfMonth = new Date(weekStart.getFullYear(), weekStart.getMonth(), 1);
-        const weekOfMonth = Math.max(1, Math.ceil((weekStart.getDate() - firstDayOfMonth.getDate() + firstDayOfMonth.getDay()) / 7));
-        
-        // Mostrar nome do mês apenas na semana 2 (centro do mês)
-        const monthLabel = weekOfMonth === 2 ? format(weekStart, 'MMM/yy', { locale: ptBR }) : '';
-        
-        ticketsOverTime.push({
-          week: monthLabel,
-          weekDetail: `S${weekOfMonth} ${format(weekStart, 'MMM/yy', { locale: ptBR })}`,
-          tickets: weekTickets,
-          weekIndex: weekIndex,
-          weekOfMonth: weekOfMonth
-        });
-        
-        currentWeek = addWeeks(currentWeek, 1);
-        weekIndex++;
+        // Dividir cada mês em exatamente 4 semanas
+        for (let week = 1; week <= 4; week++) {
+          let weekStart: Date;
+          let weekEnd: Date;
+          
+          if (week === 1) {
+            weekStart = new Date(monthStart.getFullYear(), monthStart.getMonth(), 1);
+            weekEnd = new Date(monthStart.getFullYear(), monthStart.getMonth(), 7);
+          } else if (week === 2) {
+            weekStart = new Date(monthStart.getFullYear(), monthStart.getMonth(), 8);
+            weekEnd = new Date(monthStart.getFullYear(), monthStart.getMonth(), 14);
+          } else if (week === 3) {
+            weekStart = new Date(monthStart.getFullYear(), monthStart.getMonth(), 15);
+            weekEnd = new Date(monthStart.getFullYear(), monthStart.getMonth(), 21);
+          } else { // week === 4
+            weekStart = new Date(monthStart.getFullYear(), monthStart.getMonth(), 22);
+            weekEnd = monthEnd; // Até o final do mês
+          }
+          
+          const weekTickets = tickets?.filter(ticket => {
+            const ticketDate = parseISO(ticket.created_at);
+            return ticketDate >= weekStart && ticketDate <= weekEnd;
+          }).length || 0;
+          
+          // Mostrar nome do mês apenas na semana 2 (centro do mês)
+          const monthLabel = week === 2 ? format(monthDate, 'MMM/yy', { locale: ptBR }) : '';
+          
+          ticketsOverTime.push({
+            week: monthLabel,
+            weekDetail: `S${week} ${format(monthDate, 'MMM/yy', { locale: ptBR })}`,
+            tickets: weekTickets,
+            weekIndex: (11 - i) * 4 + (week - 1),
+            weekOfMonth: week
+          });
+        }
       }
 
       const avgResolutionTime = 2.5; // Placeholder
