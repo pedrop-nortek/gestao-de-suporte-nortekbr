@@ -54,11 +54,11 @@ type TicketMessage = Database['public']['Tables']['ticket_messages']['Row'];
 // Schema de validação para edição do ticket
 const editTicketSchema = z.object({
   title: z.string().min(1, 'Título é obrigatório'),
-  category: z.string().optional(),
-  company_id: z.string().optional(),
-  contact_id: z.string().optional(),
-  equipment_model_id: z.string().optional(),
-  serial_number: z.string().optional(),
+  category: z.string().nullish().transform(val => val || undefined),
+  company_id: z.string().nullish().transform(val => val || undefined),
+  contact_id: z.string().nullish().transform(val => val || undefined),
+  equipment_model_id: z.string().nullish().transform(val => val || undefined),
+  serial_number: z.string().nullish().transform(val => val || undefined),
   priority: z.enum(['low', 'medium', 'high', 'urgent']),
 });
 
@@ -108,51 +108,73 @@ const TicketDetail = () => {
 
   useEffect(() => {
     if (id) {
-      fetchTicketDetails();
-      fetchMessages();
-      fetchUsers();
-      fetchCompanies();
-      fetchContacts();
-      fetchEquipmentModels();
+      console.log('Starting data fetch for ticket ID:', id);
+      Promise.all([
+        fetchTicketDetails(),
+        fetchMessages(),
+        fetchUsers(),
+        fetchCompanies(),
+        fetchContacts(),
+        fetchEquipmentModels()
+      ]).catch(error => {
+        console.error('Error in data fetching:', error);
+        setLoading(false);
+      });
     }
   }, [id]);
 
   useEffect(() => {
     if (ticket && isEditing) {
+      console.log('Resetting form with ticket data:', ticket);
       form.reset({
-        title: ticket.title,
+        title: ticket.title || '',
         category: ticket.category || '',
         company_id: ticket.company_id || '',
         contact_id: ticket.contact_id || '',
         equipment_model_id: ticket.equipment_model_id || '',
         serial_number: ticket.serial_number || '',
-        priority: ticket.priority,
+        priority: ticket.priority || 'medium',
       });
     }
   }, [ticket, isEditing, form]);
 
   const fetchTicketDetails = async () => {
     try {
+      console.log('Fetching ticket details for ID:', id);
+      
       const { data, error } = await supabase
         .from('tickets')
         .select(`
           *,
           companies (name),
-          assigned_user:user_profiles!tickets_assigned_to_fkey (full_name),
+          user_profiles!tickets_assigned_to_fkey (full_name),
           equipment_models (name),
           contacts (name)
         `)
         .eq('id', id)
         .single();
 
-      if (error) throw error;
-      setTicket(data);
+      if (error) {
+        console.error('Ticket query error:', error);
+        throw error;
+      }
+      
+      console.log('Ticket data received:', data);
+      
+      // Ajustar a estrutura dos dados
+      const ticketData = {
+        ...data,
+        assigned_user: data.user_profiles
+      };
+      
+      setTicket(ticketData);
       setNewStatus(data.status);
       setNewAssignedTo(data.assigned_to || 'unassigned');
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Error fetching ticket details:', error);
       toast({
         title: 'Erro',
-        description: 'Erro ao carregar detalhes do ticket',
+        description: error.message || 'Erro ao carregar detalhes do ticket',
         variant: 'destructive',
       });
     }
@@ -160,19 +182,25 @@ const TicketDetail = () => {
 
   const fetchMessages = async () => {
     try {
+      console.log('Fetching messages for ticket:', id);
       const { data, error } = await supabase
         .from('ticket_messages')
         .select('*')
         .eq('ticket_id', id)
         .order('created_at', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Messages query error:', error);
+        throw error;
+      }
+      
+      console.log('Messages received:', data?.length || 0);
       setMessages(data || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao carregar mensagens:', error);
       toast({
         title: 'Erro',
-        description: 'Erro ao carregar mensagens',
+        description: error.message || 'Erro ao carregar mensagens',
         variant: 'destructive',
       });
     } finally {
