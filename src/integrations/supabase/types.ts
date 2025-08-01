@@ -229,6 +229,7 @@ export type Database = {
           created_by: string | null
           description: string | null
           equipment_model: string | null
+          equipment_model_id: string | null
           external_message_id: string | null
           id: string
           priority: Database["public"]["Enums"]["ticket_priority"]
@@ -249,6 +250,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           equipment_model?: string | null
+          equipment_model_id?: string | null
           external_message_id?: string | null
           id?: string
           priority?: Database["public"]["Enums"]["ticket_priority"]
@@ -269,6 +271,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           equipment_model?: string | null
+          equipment_model_id?: string | null
           external_message_id?: string | null
           id?: string
           priority?: Database["public"]["Enums"]["ticket_priority"]
@@ -280,6 +283,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_tickets_equipment_model"
+            columns: ["equipment_model_id"]
+            isOneToOne: false
+            referencedRelation: "equipment_models"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "tickets_assigned_to_fkey"
             columns: ["assigned_to"]

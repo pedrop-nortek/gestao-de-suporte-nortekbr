@@ -22,6 +22,7 @@ import { Database } from '@/integrations/supabase/types';
 type Ticket = Database['public']['Tables']['tickets']['Row'] & {
   companies: { name: string } | null;
   assigned_user?: { full_name: string | null } | null;
+  equipment_models?: { name: string } | null;
 };
 
 type TicketMessage = Database['public']['Tables']['ticket_messages']['Row'];
@@ -53,7 +54,8 @@ const TicketDetail = () => {
         .select(`
           *,
           companies (name),
-          assigned_user:user_profiles!tickets_assigned_to_fkey (full_name)
+          assigned_user:user_profiles!tickets_assigned_to_fkey (full_name),
+          equipment_models (name)
         `)
         .eq('id', id)
         .single();
@@ -286,10 +288,10 @@ const TicketDetail = () => {
                   <FileText className="h-4 w-4" />
                   <Badge variant="outline">{ticket.priority}</Badge>
                 </div>
-                {ticket.equipment_model && (
+                {ticket.equipment_models?.name && (
                   <div className="flex items-center gap-2">
                     <Wrench className="h-4 w-4" />
-                    <span>{ticket.equipment_model}</span>
+                    <span>{ticket.equipment_models.name}</span>
                   </div>
                 )}
                 {ticket.serial_number && (

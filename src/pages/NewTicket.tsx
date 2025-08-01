@@ -36,7 +36,7 @@ interface TicketFormData {
   contact_id: string;
   category: string;
   priority: Database['public']['Enums']['ticket_priority'];
-  equipment_model: string;
+  equipment_model_id: string;
   serial_number: string;
   assigned_to: string;
 }
@@ -95,7 +95,7 @@ export const NewTicket = () => {
     contact_id: '',
     category: '',
     priority: 'medium',
-    equipment_model: '',
+    equipment_model_id: '',
     serial_number: '',
     assigned_to: 'unassigned',
   });
@@ -280,7 +280,7 @@ export const NewTicket = () => {
 
       // Refresh equipment list and select the new equipment
       await fetchEquipmentModels();
-      setFormData(prev => ({ ...prev, equipment_model: newEquipment.name }));
+      setFormData(prev => ({ ...prev, equipment_model_id: newEquipment.id }));
       
       // Reset form and close dialog
       setEquipmentFormData({
@@ -322,7 +322,7 @@ export const NewTicket = () => {
           company_id: formData.company_id,
           category: formData.category,
           priority: formData.priority,
-          equipment_model: formData.equipment_model || null,
+          equipment_model_id: formData.equipment_model_id || null,
           serial_number: formData.serial_number || null,
           contact_id: formData.contact_id || null,
           assigned_to: formData.assigned_to === 'unassigned' ? null : formData.assigned_to,
@@ -549,15 +549,15 @@ export const NewTicket = () => {
               <Label htmlFor="equipment_model">Modelo do Equipamento</Label>
               <div className="flex gap-2">
                 <Select
-                  value={formData.equipment_model}
-                  onValueChange={(value) => setFormData({ ...formData, equipment_model: value })}
+                  value={formData.equipment_model_id}
+                  onValueChange={(value) => setFormData({ ...formData, equipment_model_id: value })}
                 >
                   <SelectTrigger className="flex-1">
                     <SelectValue placeholder="Selecione um modelo de equipamento" />
                   </SelectTrigger>
                   <SelectContent>
                     {equipmentModels.map((model) => (
-                      <SelectItem key={model.id} value={model.name}>
+                      <SelectItem key={model.id} value={model.id}>
                         {model.name}
                       </SelectItem>
                     ))}
