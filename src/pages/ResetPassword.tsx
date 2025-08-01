@@ -5,24 +5,41 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 
 const ResetPassword = () => {
   const { updatePassword, user, session } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [isRecoveryMode, setIsRecoveryMode] = useState(false);
 
   useEffect(() => {
-    // Se não há sessão ativa, redirecionar para login
-    if (!session) {
+    // Verificar se está em modo de recovery através da URL
+    const urlHash = window.location.hash;
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    const hasRecoveryType = urlHash.includes('type=recovery') || 
+                           urlParams.get('type') === 'recovery' ||
+                           searchParams.get('type') === 'recovery';
+    
+    const hasTokens = urlHash.includes('access_token') || 
+                     !!urlParams.get('access_token') ||
+                     !!searchParams.get('access_token');
+
+    setIsRecoveryMode(hasRecoveryType && hasTokens);
+
+    // Se não está em modo recovery e não há sessão, redirecionar para auth
+    if (!hasRecoveryType && !hasTokens && !session) {
       navigate('/auth');
     }
-  }, [session, navigate]);
+  }, [session, navigate, searchParams]);
 
-  if (user && !window.location.hash.includes('type=recovery')) {
+  // Se usuário já está logado e não está em modo recovery, redirecionar para dashboard
+  if (user && session && !isRecoveryMode) {
     return <Navigate to="/dashboard" replace />;
   }
 
