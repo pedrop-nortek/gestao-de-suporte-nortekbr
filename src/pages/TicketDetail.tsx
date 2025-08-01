@@ -118,7 +118,6 @@ const TicketDetail = () => {
 
   useEffect(() => {
     if (ticket && isEditing) {
-      console.log('Resetting form with ticket data:', ticket);
       form.reset({
         title: ticket.title || '',
         category: ticket.category || '',
@@ -546,14 +545,13 @@ const TicketDetail = () => {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Categoria</FormLabel>
-                            <Select value={field.value} onValueChange={field.onChange}>
+                            <Select value={field.value || ""} onValueChange={field.onChange}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Selecione uma categoria" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="">Sem categoria</SelectItem>
                                 {categories.map((category) => (
                                   <SelectItem key={category} value={category}>
                                     {category}
@@ -598,14 +596,13 @@ const TicketDetail = () => {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Empresa</FormLabel>
-                            <Select value={field.value} onValueChange={field.onChange}>
+                            <Select value={field.value || ""} onValueChange={field.onChange}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Selecione uma empresa" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="">Sem empresa</SelectItem>
                                 {companies.map((company) => (
                                   <SelectItem key={company.id} value={company.id}>
                                     {company.name}
@@ -624,14 +621,13 @@ const TicketDetail = () => {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Contato</FormLabel>
-                            <Select value={field.value} onValueChange={field.onChange}>
+                            <Select value={field.value || ""} onValueChange={field.onChange}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Selecione um contato" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="">Sem contato</SelectItem>
                                 {filteredContacts.map((contact) => (
                                   <SelectItem key={contact.id} value={contact.id}>
                                     {contact.name}
@@ -652,14 +648,13 @@ const TicketDetail = () => {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Equipamento</FormLabel>
-                            <Select value={field.value} onValueChange={field.onChange}>
+                            <Select value={field.value || ""} onValueChange={field.onChange}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Selecione um equipamento" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="">Sem equipamento</SelectItem>
                                 {equipmentModels.map((model) => (
                                   <SelectItem key={model.id} value={model.id}>
                                     {model.name}
