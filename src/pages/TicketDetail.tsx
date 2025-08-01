@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import {
@@ -14,38 +15,121 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ArrowLeft, Clock, User, Building2, Tag, FileText, Wrench, Hash } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { ArrowLeft, Clock, User, Building2, Tag, FileText, Wrench, Hash, Edit, Trash2, Save, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { Database } from '@/integrations/supabase/types';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 
 type Ticket = Database['public']['Tables']['tickets']['Row'] & {
   companies: { name: string } | null;
   assigned_user?: { full_name: string | null } | null;
   equipment_models?: { name: string } | null;
+  contacts?: { name: string } | null;
 };
 
 type TicketMessage = Database['public']['Tables']['ticket_messages']['Row'];
 
+// Schema de validação para edição do ticket
+const editTicketSchema = z.object({
+  title: z.string().min(1, 'Título é obrigatório'),
+  category: z.string().optional(),
+  company_id: z.string().optional(),
+  contact_id: z.string().optional(),
+  equipment_model_id: z.string().optional(),
+  serial_number: z.string().optional(),
+  priority: z.enum(['low', 'medium', 'high', 'urgent']),
+});
+
+type EditTicketFormData = z.infer<typeof editTicketSchema>;
+
 const TicketDetail = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [messages, setMessages] = useState<TicketMessage[]>([]);
   const [users, setUsers] = useState<{ id: string; full_name: string | null; user_id: string }[]>([]);
+  const [companies, setCompanies] = useState<{ id: string; name: string }[]>([]);
+  const [contacts, setContacts] = useState<{ id: string; name: string; company_id: string }[]>([]);
+  const [equipmentModels, setEquipmentModels] = useState<{ id: string; name: string }[]>([]);
+  const [categories] = useState<string[]>([
+    'Data processing/interpretation',
+    'Deployment configuration',
+    'Instrument communication and troubleshooting',
+    'Instrument specific/technical information',
+    'Other',
+    'Suporte Técnico',
+    'System integration',
+    'Theoretical questions/principal of our instrument'
+  ]);
   const [loading, setLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editLoading, setEditLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [newMessage, setNewMessage] = useState('');
   const [newStatus, setNewStatus] = useState<Database['public']['Enums']['ticket_status']>('open');
   const [newAssignedTo, setNewAssignedTo] = useState<string>('unassigned');
+
+  const form = useForm<EditTicketFormData>({
+    resolver: zodResolver(editTicketSchema),
+    defaultValues: {
+      title: '',
+      category: '',
+      company_id: '',
+      contact_id: '',
+      equipment_model_id: '',
+      serial_number: '',
+      priority: 'medium',
+    },
+  });
 
   useEffect(() => {
     if (id) {
       fetchTicketDetails();
       fetchMessages();
       fetchUsers();
+      fetchCompanies();
+      fetchContacts();
+      fetchEquipmentModels();
     }
   }, [id]);
+
+  useEffect(() => {
+    if (ticket && isEditing) {
+      form.reset({
+        title: ticket.title,
+        category: ticket.category || '',
+        company_id: ticket.company_id || '',
+        contact_id: ticket.contact_id || '',
+        equipment_model_id: ticket.equipment_model_id || '',
+        serial_number: ticket.serial_number || '',
+        priority: ticket.priority,
+      });
+    }
+  }, [ticket, isEditing, form]);
 
   const fetchTicketDetails = async () => {
     try {
@@ -55,7 +139,8 @@ const TicketDetail = () => {
           *,
           companies (name),
           assigned_user:user_profiles!tickets_assigned_to_fkey (full_name),
-          equipment_models (name)
+          equipment_models (name),
+          contacts (name)
         `)
         .eq('id', id)
         .single();
@@ -113,6 +198,130 @@ const TicketDetail = () => {
       });
     }
   };
+
+  const fetchCompanies = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('companies')
+        .select('id, name')
+        .order('name');
+      
+      if (error) throw error;
+      setCompanies(data || []);
+    } catch (error: any) {
+      console.error('Erro ao carregar empresas:', error);
+    }
+  };
+
+  const fetchContacts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('contacts')
+        .select('id, name, company_id')
+        .order('name');
+      
+      if (error) throw error;
+      setContacts(data || []);
+    } catch (error: any) {
+      console.error('Erro ao carregar contatos:', error);
+    }
+  };
+
+  const fetchEquipmentModels = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('equipment_models')
+        .select('id, name')
+        .order('name');
+      
+      if (error) throw error;
+      setEquipmentModels(data || []);
+    } catch (error: any) {
+      console.error('Erro ao carregar modelos de equipamento:', error);
+    }
+  };
+
+  const handleEdit = () => {
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    form.reset();
+  };
+
+  const handleSaveEdit = async (data: EditTicketFormData) => {
+    setEditLoading(true);
+    try {
+      const { error } = await supabase
+        .from('tickets')
+        .update({
+          title: data.title,
+          category: data.category || null,
+          company_id: data.company_id || null,
+          contact_id: data.contact_id || null,
+          equipment_model_id: data.equipment_model_id || null,
+          serial_number: data.serial_number || null,
+          priority: data.priority,
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      await fetchTicketDetails();
+      setIsEditing(false);
+      toast({
+        title: 'Sucesso',
+        description: 'Ticket atualizado com sucesso',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Erro',
+        description: error.message || 'Erro ao atualizar ticket',
+        variant: 'destructive',
+      });
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setDeleteLoading(true);
+    try {
+      // Primeiro deletar mensagens relacionadas
+      await supabase
+        .from('ticket_messages')
+        .delete()
+        .eq('ticket_id', id);
+
+      // Depois deletar o ticket
+      const { error } = await supabase
+        .from('tickets')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Sucesso',
+        description: 'Ticket excluído com sucesso',
+      });
+      navigate('/dashboard');
+    } catch (error: any) {
+      toast({
+        title: 'Erro',
+        description: error.message || 'Erro ao excluir ticket',
+        variant: 'destructive',
+      });
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  // Filtrar contatos pela empresa selecionada
+  const filteredContacts = contacts.filter(contact => 
+    !form.watch('company_id') || contact.company_id === form.watch('company_id')
+  );
 
   const addMessage = async () => {
     if (!newMessage.trim() || !user) return;
@@ -248,14 +457,48 @@ const TicketDetail = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" asChild>
-          <Link to="/dashboard">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Voltar
-          </Link>
-        </Button>
-        <h1 className="text-3xl font-bold">Ticket #{ticket.id.slice(0, 8)}</h1>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="sm" asChild>
+            <Link to="/dashboard">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Voltar
+            </Link>
+          </Button>
+          <h1 className="text-3xl font-bold">Ticket #{ticket.id.slice(0, 8)}</h1>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          {!isEditing && (
+            <Button onClick={handleEdit} variant="outline">
+              <Edit className="mr-2 h-4 w-4" />
+              Editar
+            </Button>
+          )}
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" disabled={deleteLoading}>
+                <Trash2 className="mr-2 h-4 w-4" />
+                Excluir
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Tem certeza que deseja excluir este ticket? Esta ação não pode ser desfeita.
+                  Todas as mensagens associadas também serão excluídas.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDelete} disabled={deleteLoading}>
+                  {deleteLoading ? 'Excluindo...' : 'Excluir'}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -264,50 +507,240 @@ const TicketDetail = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
-                <span>{ticket.title}</span>
-                {getStatusBadge(ticket.status)}
+                {isEditing ? (
+                  <span>Editando Ticket</span>
+                ) : (
+                  <span>{ticket.title}</span>
+                )}
+                {!isEditing && getStatusBadge(ticket.status)}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <p className="text-muted-foreground">{ticket.description}</p>
-              
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div className="flex items-center gap-2">
-                  <Building2 className="h-4 w-4" />
-                  <span>{ticket.companies?.name || 'N/A'}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Tag className="h-4 w-4" />
-                  <span>{ticket.category || 'N/A'}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4" />
-                  <span>{new Date(ticket.created_at).toLocaleString('pt-BR')}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <FileText className="h-4 w-4" />
-                  <Badge variant="outline">{ticket.priority}</Badge>
-                </div>
-                {ticket.equipment_models?.name && (
-                  <div className="flex items-center gap-2">
-                    <Wrench className="h-4 w-4" />
-                    <span>{ticket.equipment_models.name}</span>
-                  </div>
-                )}
-                {ticket.serial_number && (
-                  <div className="flex items-center gap-2">
-                    <Hash className="h-4 w-4" />
-                    <span>{ticket.serial_number}</span>
-                  </div>
-                )}
-                <div className="flex items-center gap-2">
-                  <User className="h-4 w-4" />
-                  <span>
-                    <strong>Responsável:</strong> {ticket.assigned_user?.full_name || 'Não atribuído'}
-                  </span>
-                </div>
-              </div>
+              {isEditing ? (
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(handleSaveEdit)} className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="title"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Título</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Título do ticket" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="category"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Categoria</FormLabel>
+                            <Select value={field.value} onValueChange={field.onChange}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Selecione uma categoria" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="">Sem categoria</SelectItem>
+                                {categories.map((category) => (
+                                  <SelectItem key={category} value={category}>
+                                    {category}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="priority"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Prioridade</FormLabel>
+                            <Select value={field.value} onValueChange={field.onChange}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="low">Baixa</SelectItem>
+                                <SelectItem value="medium">Média</SelectItem>
+                                <SelectItem value="high">Alta</SelectItem>
+                                <SelectItem value="urgent">Urgente</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="company_id"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Empresa</FormLabel>
+                            <Select value={field.value} onValueChange={field.onChange}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Selecione uma empresa" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="">Sem empresa</SelectItem>
+                                {companies.map((company) => (
+                                  <SelectItem key={company.id} value={company.id}>
+                                    {company.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="contact_id"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Contato</FormLabel>
+                            <Select value={field.value} onValueChange={field.onChange}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Selecione um contato" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="">Sem contato</SelectItem>
+                                {filteredContacts.map((contact) => (
+                                  <SelectItem key={contact.id} value={contact.id}>
+                                    {contact.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="equipment_model_id"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Equipamento</FormLabel>
+                            <Select value={field.value} onValueChange={field.onChange}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Selecione um equipamento" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="">Sem equipamento</SelectItem>
+                                {equipmentModels.map((model) => (
+                                  <SelectItem key={model.id} value={model.id}>
+                                    {model.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="serial_number"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Serial do Equipamento</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="Número de série" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-4">
+                      <Button type="submit" disabled={editLoading}>
+                        <Save className="mr-2 h-4 w-4" />
+                        {editLoading ? 'Salvando...' : 'Salvar'}
+                      </Button>
+                      <Button type="button" variant="outline" onClick={handleCancelEdit}>
+                        <X className="mr-2 h-4 w-4" />
+                        Cancelar
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
+              ) : (
+                <>
+                  <p className="text-muted-foreground">{ticket.description}</p>
+                  
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div className="flex items-center gap-2">
+                      <Building2 className="h-4 w-4" />
+                      <span>{ticket.companies?.name || 'N/A'}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Tag className="h-4 w-4" />
+                      <span>{ticket.category || 'N/A'}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4" />
+                      <span>{new Date(ticket.created_at).toLocaleString('pt-BR')}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      <Badge variant="outline">{ticket.priority}</Badge>
+                    </div>
+                    {ticket.contacts?.name && (
+                      <div className="flex items-center gap-2">
+                        <User className="h-4 w-4" />
+                        <span><strong>Contato:</strong> {ticket.contacts.name}</span>
+                      </div>
+                    )}
+                    {ticket.equipment_models?.name && (
+                      <div className="flex items-center gap-2">
+                        <Wrench className="h-4 w-4" />
+                        <span>{ticket.equipment_models.name}</span>
+                      </div>
+                    )}
+                    {ticket.serial_number && (
+                      <div className="flex items-center gap-2">
+                        <Hash className="h-4 w-4" />
+                        <span>{ticket.serial_number}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      <span>
+                        <strong>Responsável:</strong> {ticket.assigned_user?.full_name || 'Não atribuído'}
+                      </span>
+                    </div>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
 
