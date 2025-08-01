@@ -51,7 +51,14 @@ const ResetPassword = () => {
           } else {
             console.log('Token de recovery processado com sucesso');
             setIsRecoveryMode(true);
+            // Limpar URL dos tokens após processar
+            window.history.replaceState({}, document.title, '/auth/reset-password');
           }
+        } else if (session?.user) {
+          // Se há sessão mas não está em recovery mode, verificar se é sessão de recovery
+          // Usuários em sessão normal não deveriam estar aqui
+          console.log('Usuário já logado, verificando contexto...');
+          setIsRecoveryMode(true);
         } else if (!session && !accessToken) {
           // Se não há tokens nem sessão, redirecionar para auth
           navigate('/auth');

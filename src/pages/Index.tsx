@@ -6,8 +6,20 @@ import { Ticket, Building2, Users, BarChart3 } from "lucide-react";
 const Index = () => {
   const { user } = useAuth();
 
-  if (user) {
+  // Check if this is a recovery token redirect
+  const urlHash = window.location.hash;
+  const urlParams = new URLSearchParams(window.location.search);
+  const hashParams = new URLSearchParams(urlHash.substring(1));
+  const hasRecoveryToken = hashParams.get('type') === 'recovery' || urlParams.get('type') === 'recovery';
+
+  if (user && !hasRecoveryToken) {
     window.location.href = "/dashboard";
+    return null;
+  }
+
+  // If there's a recovery token, redirect to reset password page
+  if (hasRecoveryToken) {
+    window.location.href = "/auth/reset-password";
     return null;
   }
 
