@@ -250,9 +250,9 @@ export const Reports = () => {
           return ticketDate >= weekStart && ticketDate <= weekEnd;
         }).length || 0;
 
-        // Calcular número da semana no mês (1-4/5)
+        // Calcular número da semana no mês (sempre começando em S1)
         const firstDayOfMonth = new Date(weekStart.getFullYear(), weekStart.getMonth(), 1);
-        const weekOfMonth = Math.ceil((weekStart.getDate() - firstDayOfMonth.getDate() + firstDayOfMonth.getDay()) / 7);
+        const weekOfMonth = Math.max(1, Math.ceil((weekStart.getDate() - firstDayOfMonth.getDate() + firstDayOfMonth.getDay()) / 7));
         
         // Usar apenas mês/ano como label do eixo, mas manter info da semana para o tooltip
         ticketsOverTime.push({
