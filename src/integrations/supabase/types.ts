@@ -220,6 +220,7 @@ export type Database = {
       }
       tickets: {
         Row: {
+          assigned_to: string | null
           category: string | null
           channel: Database["public"]["Enums"]["communication_channel"]
           company_id: string | null
@@ -238,6 +239,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          assigned_to?: string | null
           category?: string | null
           channel?: Database["public"]["Enums"]["communication_channel"]
           company_id?: string | null
@@ -256,6 +258,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          assigned_to?: string | null
           category?: string | null
           channel?: Database["public"]["Enums"]["communication_channel"]
           company_id?: string | null
@@ -274,6 +277,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "tickets_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["user_id"]
+          },
           {
             foreignKeyName: "tickets_company_id_fkey"
             columns: ["company_id"]
