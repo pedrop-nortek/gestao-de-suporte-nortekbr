@@ -700,30 +700,30 @@ export const Reports = () => {
       </Card>
 
       {/* Resumo estatístico */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-        <Card>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle>Resumo Estatístico</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="space-y-2 text-center">
                 <p className="text-sm text-muted-foreground">Taxa de Resolução</p>
                 <p className="text-2xl font-bold">
                   {data.totalTickets > 0 ? Math.round((data.closedTickets / data.totalTickets) * 100) : 0}%
                 </p>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2 text-center">
                 <p className="text-sm text-muted-foreground">Tickets em Aberto</p>
                 <p className="text-2xl font-bold">
                   {data.openTickets + data.inProgressTickets + data.pausedTickets}
                 </p>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2 text-center">
                 <p className="text-sm text-muted-foreground">Empresas Ativas</p>
                 <p className="text-2xl font-bold">{data.ticketsByCompany.length}</p>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2 text-center">
                 <p className="text-sm text-muted-foreground">Categorias</p>
                 <p className="text-2xl font-bold">{data.ticketsByCategory.length}</p>
               </div>
