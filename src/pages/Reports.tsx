@@ -428,23 +428,25 @@ export const Reports = () => {
             </CardHeader>
             <CardContent className="flex justify-center">
               <div className="w-full max-w-[400px] h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RechartsPieChart>
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Pie
-                      data={data.ticketsByStatus}
-                      dataKey="value"
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={100}
-                      innerRadius={50}
-                    >
-                      {data.ticketsByStatus.map((entry, index) => (
-                        <Cell key={`status-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                  </RechartsPieChart>
-                </ResponsiveContainer>
+                <ChartContainer config={chartConfig} className="w-full h-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RechartsPieChart>
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Pie
+                        data={data.ticketsByStatus}
+                        dataKey="value"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={100}
+                        innerRadius={50}
+                      >
+                        {data.ticketsByStatus.map((entry, index) => (
+                          <Cell key={`status-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                    </RechartsPieChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
               </div>
             </CardContent>
           </Card>
@@ -458,23 +460,25 @@ export const Reports = () => {
             </CardHeader>
             <CardContent className="flex justify-center">
               <div className="w-full max-w-[400px] h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RechartsPieChart>
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Pie
-                      data={data.ticketsByPriority}
-                      dataKey="value"
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={100}
-                      innerRadius={50}
-                    >
-                      {data.ticketsByPriority.map((entry, index) => (
-                        <Cell key={`priority-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                  </RechartsPieChart>
-                </ResponsiveContainer>
+                <ChartContainer config={chartConfig} className="w-full h-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RechartsPieChart>
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Pie
+                        data={data.ticketsByPriority}
+                        dataKey="value"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={100}
+                        innerRadius={50}
+                      >
+                        {data.ticketsByPriority.map((entry, index) => (
+                          <Cell key={`priority-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                    </RechartsPieChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
               </div>
             </CardContent>
           </Card>
@@ -491,24 +495,26 @@ export const Reports = () => {
             </CardHeader>
             <CardContent className="flex justify-center">
               <div className="w-full max-w-[400px] h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RechartsPieChart>
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Pie
-                      data={data.ticketsByCompany}
-                      dataKey="value"
-                      nameKey="name"
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={100}
-                      innerRadius={50}
-                    >
-                      {data.ticketsByCompany.map((entry, index) => (
-                        <Cell key={`company-${index}`} fill={getChartColor(index)} />
-                      ))}
-                    </Pie>
-                  </RechartsPieChart>
-                </ResponsiveContainer>
+                <ChartContainer config={chartConfig} className="w-full h-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RechartsPieChart>
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Pie
+                        data={data.ticketsByCompany}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={100}
+                        innerRadius={50}
+                      >
+                        {data.ticketsByCompany.map((entry, index) => (
+                          <Cell key={`company-${index}`} fill={getChartColor(index)} />
+                        ))}
+                      </Pie>
+                    </RechartsPieChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
               </div>
             </CardContent>
           </Card>
@@ -522,24 +528,26 @@ export const Reports = () => {
             </CardHeader>
             <CardContent className="flex justify-center">
               <div className="w-full max-w-[400px] h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RechartsPieChart>
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Pie
-                      data={data.ticketsByCategory}
-                      dataKey="value"
-                      nameKey="name"
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={100}
-                      innerRadius={50}
-                    >
-                      {data.ticketsByCategory.map((entry, index) => (
-                        <Cell key={`category-${index}`} fill={getChartColor(index)} />
-                      ))}
-                    </Pie>
-                  </RechartsPieChart>
-                </ResponsiveContainer>
+                <ChartContainer config={chartConfig} className="w-full h-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RechartsPieChart>
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Pie
+                        data={data.ticketsByCategory}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={100}
+                        innerRadius={50}
+                      >
+                        {data.ticketsByCategory.map((entry, index) => (
+                          <Cell key={`category-${index}`} fill={getChartColor(index)} />
+                        ))}
+                      </Pie>
+                    </RechartsPieChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
               </div>
             </CardContent>
           </Card>
@@ -556,24 +564,26 @@ export const Reports = () => {
             </CardHeader>
             <CardContent className="flex justify-center">
               <div className="w-full max-w-[400px] h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RechartsPieChart>
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Pie
-                      data={data.ticketsByEquipment}
-                      dataKey="value"
-                      nameKey="name"
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={100}
-                      innerRadius={50}
-                    >
-                      {data.ticketsByEquipment.map((entry, index) => (
-                        <Cell key={`equipment-${index}`} fill={getChartColor(index)} />
-                      ))}
-                    </Pie>
-                  </RechartsPieChart>
-                </ResponsiveContainer>
+                <ChartContainer config={chartConfig} className="w-full h-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RechartsPieChart>
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Pie
+                        data={data.ticketsByEquipment}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={100}
+                        innerRadius={50}
+                      >
+                        {data.ticketsByEquipment.map((entry, index) => (
+                          <Cell key={`equipment-${index}`} fill={getChartColor(index)} />
+                        ))}
+                      </Pie>
+                    </RechartsPieChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
               </div>
             </CardContent>
           </Card>
@@ -587,24 +597,26 @@ export const Reports = () => {
             </CardHeader>
             <CardContent className="flex justify-center">
               <div className="w-full max-w-[400px] h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RechartsPieChart>
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Pie
-                      data={data.ticketsByUser}
-                      dataKey="value"
-                      nameKey="name"
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={100}
-                      innerRadius={50}
-                    >
-                      {data.ticketsByUser.map((entry, index) => (
-                        <Cell key={`user-${index}`} fill={getChartColor(index)} />
-                      ))}
-                    </Pie>
-                  </RechartsPieChart>
-                </ResponsiveContainer>
+                <ChartContainer config={chartConfig} className="w-full h-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RechartsPieChart>
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Pie
+                        data={data.ticketsByUser}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={100}
+                        innerRadius={50}
+                      >
+                        {data.ticketsByUser.map((entry, index) => (
+                          <Cell key={`user-${index}`} fill={getChartColor(index)} />
+                        ))}
+                      </Pie>
+                    </RechartsPieChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
               </div>
             </CardContent>
           </Card>
