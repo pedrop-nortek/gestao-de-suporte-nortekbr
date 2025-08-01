@@ -66,17 +66,17 @@ const chartConfig = {
 };
 
 const STATUS_COLORS = {
-  'open': 'hsl(var(--chart-2))',
-  'in_progress': 'hsl(var(--chart-4))',
-  'closed': 'hsl(var(--chart-3))',
-  'paused': 'hsl(var(--chart-5))',
+  'open': '#ef4444', // red-500 - mesmo que na lista de tickets
+  'in_progress': '#22c55e', // green-500
+  'closed': '#3b82f6', // blue-500
+  'paused': '#6b7280', // gray-500
 };
 
 const PRIORITY_COLORS = {
-  'low': 'hsl(var(--chart-1))',
-  'medium': 'hsl(var(--chart-2))',
-  'high': 'hsl(var(--chart-3))',
-  'urgent': 'hsl(var(--chart-4))',
+  'low': '#d1d5db', // gray-300
+  'medium': '#facc15', // yellow-400
+  'high': '#f97316', // orange-500
+  'urgent': '#dc2626', // red-600
 };
 
 export const Reports = () => {
@@ -371,7 +371,7 @@ export const Reports = () => {
       </div>
 
       {/* Gráficos principais */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Gráfico de pizza - Status */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
@@ -434,7 +434,7 @@ export const Reports = () => {
           </CardContent>
         </Card>
 
-        {/* Gráfico de barras - Empresas */}
+        {/* Gráfico de pizza - Empresas */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-2">
@@ -444,52 +444,55 @@ export const Reports = () => {
           </CardHeader>
           <CardContent>
             <ChartContainer config={chartConfig} className="h-[300px]">
-              <BarChart data={data.ticketsByCompany}>
-                <XAxis 
-                  dataKey="name" 
-                  tick={{ fontSize: 12 }}
-                  angle={-45}
-                  textAnchor="end"
-                  height={80}
-                />
-                <YAxis />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar dataKey="value" fill="hsl(var(--chart-1))" radius={4} />
-              </BarChart>
-            </ChartContainer>
-          </CardContent>
-        </Card>
-
-        {/* Gráfico de linha - Evolução temporal */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4" />
-              Evolução Mensal
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer config={chartConfig} className="h-[300px]">
-              <LineChart data={data.ticketsOverTime}>
-                <XAxis dataKey="month" />
-                <YAxis />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Line 
-                  type="monotone" 
-                  dataKey="tickets" 
-                  stroke="hsl(var(--chart-1))" 
-                  strokeWidth={2}
-                  dot={{ fill: "hsl(var(--chart-1))" }}
-                />
-              </LineChart>
+              <ResponsiveContainer width="100%" height="100%">
+                <RechartsPieChart>
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Pie
+                    data={data.ticketsByCompany}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    innerRadius={40}
+                    fill="hsl(var(--chart-1))"
+                  />
+                </RechartsPieChart>
+              </ResponsiveContainer>
             </ChartContainer>
           </CardContent>
         </Card>
       </div>
 
+      {/* Gráfico de evolução mensal */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="h-4 w-4" />
+            Evolução Mensal
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ChartContainer config={chartConfig} className="h-[300px]">
+            <LineChart data={data.ticketsOverTime}>
+              <XAxis dataKey="month" />
+              <YAxis />
+              <ChartTooltip content={<ChartTooltipContent />} />
+              <Line 
+                type="monotone" 
+                dataKey="tickets" 
+                stroke="hsl(var(--chart-1))" 
+                strokeWidth={2}
+                dot={{ fill: "hsl(var(--chart-1))" }}
+              />
+            </LineChart>
+          </ChartContainer>
+        </CardContent>
+      </Card>
+
       {/* Gráficos secundários */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Gráfico de barras - Categoria */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Gráfico de pizza - Categoria */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-2">
@@ -499,23 +502,26 @@ export const Reports = () => {
           </CardHeader>
           <CardContent>
             <ChartContainer config={chartConfig} className="h-[300px]">
-              <BarChart data={data.ticketsByCategory}>
-                <XAxis 
-                  dataKey="name" 
-                  tick={{ fontSize: 12 }}
-                  angle={-45}
-                  textAnchor="end"
-                  height={80}
-                />
-                <YAxis />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar dataKey="value" fill="hsl(var(--chart-2))" radius={4} />
-              </BarChart>
+              <ResponsiveContainer width="100%" height="100%">
+                <RechartsPieChart>
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Pie
+                    data={data.ticketsByCategory}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    innerRadius={40}
+                    fill="hsl(var(--chart-2))"
+                  />
+                </RechartsPieChart>
+              </ResponsiveContainer>
             </ChartContainer>
           </CardContent>
         </Card>
 
-        {/* Gráfico de barras - Equipamento */}
+        {/* Gráfico de pizza - Equipamento */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-2">
@@ -525,23 +531,26 @@ export const Reports = () => {
           </CardHeader>
           <CardContent>
             <ChartContainer config={chartConfig} className="h-[300px]">
-              <BarChart data={data.ticketsByEquipment}>
-                <XAxis 
-                  dataKey="name" 
-                  tick={{ fontSize: 12 }}
-                  angle={-45}
-                  textAnchor="end"
-                  height={80}
-                />
-                <YAxis />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar dataKey="value" fill="hsl(var(--chart-3))" radius={4} />
-              </BarChart>
+              <ResponsiveContainer width="100%" height="100%">
+                <RechartsPieChart>
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Pie
+                    data={data.ticketsByEquipment}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    innerRadius={40}
+                    fill="hsl(var(--chart-3))"
+                  />
+                </RechartsPieChart>
+              </ResponsiveContainer>
             </ChartContainer>
           </CardContent>
         </Card>
 
-        {/* Gráfico de barras - Responsável */}
+        {/* Gráfico de pizza - Responsável */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-2">
@@ -551,18 +560,21 @@ export const Reports = () => {
           </CardHeader>
           <CardContent>
             <ChartContainer config={chartConfig} className="h-[300px]">
-              <BarChart data={data.ticketsByUser}>
-                <XAxis 
-                  dataKey="name" 
-                  tick={{ fontSize: 12 }}
-                  angle={-45}
-                  textAnchor="end"
-                  height={80}
-                />
-                <YAxis />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar dataKey="value" fill="hsl(var(--chart-4))" radius={4} />
-              </BarChart>
+              <ResponsiveContainer width="100%" height="100%">
+                <RechartsPieChart>
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Pie
+                    data={data.ticketsByUser}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    innerRadius={40}
+                    fill="hsl(var(--chart-4))"
+                  />
+                </RechartsPieChart>
+              </ResponsiveContainer>
             </ChartContainer>
           </CardContent>
         </Card>
