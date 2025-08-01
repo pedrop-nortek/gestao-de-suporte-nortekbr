@@ -21,6 +21,7 @@ import { Database } from '@/integrations/supabase/types';
 
 type Ticket = Database['public']['Tables']['tickets']['Row'] & {
   companies: { name: string } | null;
+  assigned_user?: { full_name: string | null } | null;
 };
 
 type TicketMessage = Database['public']['Tables']['ticket_messages']['Row'];
@@ -31,14 +32,17 @@ const TicketDetail = () => {
   const { toast } = useToast();
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [messages, setMessages] = useState<TicketMessage[]>([]);
+  const [users, setUsers] = useState<{ id: string; full_name: string | null; user_id: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [newMessage, setNewMessage] = useState('');
   const [newStatus, setNewStatus] = useState<Database['public']['Enums']['ticket_status']>('open');
+  const [newAssignedTo, setNewAssignedTo] = useState<string>('');
 
   useEffect(() => {
     if (id) {
       fetchTicketDetails();
       fetchMessages();
+      fetchUsers();
     }
   }, [id]);
 
@@ -48,7 +52,8 @@ const TicketDetail = () => {
         .from('tickets')
         .select(`
           *,
-          companies (name)
+          companies (name),
+          assigned_user:user_profiles!tickets_assigned_to_fkey (full_name)
         `)
         .eq('id', id)
         .single();
@@ -56,6 +61,7 @@ const TicketDetail = () => {
       if (error) throw error;
       setTicket(data);
       setNewStatus(data.status);
+      setNewAssignedTo(data.assigned_to || '');
     } catch (error) {
       toast({
         title: 'Erro',
@@ -84,6 +90,25 @@ const TicketDetail = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('id, user_id, full_name')
+        .order('full_name');
+      
+      if (error) throw error;
+      setUsers(data || []);
+    } catch (error: any) {
+      console.error('Erro ao carregar usuários:', error);
+      toast({
+        title: 'Erro',
+        description: 'Erro ao carregar usuários',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -145,6 +170,31 @@ const TicketDetail = () => {
       toast({
         title: 'Erro',
         description: 'Erro ao atualizar status',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const updateAssignedTo = async () => {
+    if (newAssignedTo === ticket?.assigned_to) return;
+
+    try {
+      const { error } = await supabase
+        .from('tickets')
+        .update({ assigned_to: newAssignedTo || null })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      fetchTicketDetails();
+      toast({
+        title: 'Sucesso',
+        description: 'Responsável atualizado',
+      });
+    } catch (error) {
+      toast({
+        title: 'Erro',
+        description: 'Erro ao atualizar responsável',
         variant: 'destructive',
       });
     }
@@ -248,6 +298,12 @@ const TicketDetail = () => {
                     <span>{ticket.serial_number}</span>
                   </div>
                 )}
+                <div className="flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  <span>
+                    <strong>Responsável:</strong> {ticket.assigned_user?.full_name || 'Não atribuído'}
+                  </span>
+                </div>
               </div>
 
             </CardContent>
@@ -338,6 +394,33 @@ const TicketDetail = () => {
                 className="w-full"
               >
                 Atualizar Status
+              </Button>
+              
+              <Separator />
+              
+              <div>
+                <Label htmlFor="assigned_to">Atribuir Responsável</Label>
+                <Select value={newAssignedTo} onValueChange={setNewAssignedTo}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um responsável" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Sem atribuição</SelectItem>
+                    {users.map((user) => (
+                      <SelectItem key={user.user_id} value={user.user_id}>
+                        {user.full_name || 'Usuário sem nome'}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <Button 
+                onClick={updateAssignedTo} 
+                disabled={newAssignedTo === ticket.assigned_to}
+                className="w-full"
+              >
+                Atualizar Responsável
               </Button>
             </CardContent>
           </Card>

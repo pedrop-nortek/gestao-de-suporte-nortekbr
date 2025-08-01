@@ -29,6 +29,7 @@ interface TicketFormData {
   priority: Database['public']['Enums']['ticket_priority'];
   equipment_model: string;
   serial_number: string;
+  assigned_to: string;
 }
 
 const PREDEFINED_CATEGORIES = [
@@ -47,6 +48,7 @@ export const NewTicket = () => {
   const navigate = useNavigate();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [equipmentModels, setEquipmentModels] = useState<{ id: string; name: string }[]>([]);
+  const [users, setUsers] = useState<{ id: string; full_name: string | null; user_id: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<TicketFormData>({
     title: '',
@@ -56,11 +58,13 @@ export const NewTicket = () => {
     priority: 'medium',
     equipment_model: '',
     serial_number: '',
+    assigned_to: '',
   });
 
   useEffect(() => {
     fetchCompanies();
     fetchEquipmentModels();
+    fetchUsers();
   }, []);
 
   const fetchCompanies = async () => {
@@ -101,6 +105,25 @@ export const NewTicket = () => {
     }
   };
 
+  const fetchUsers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('id, user_id, full_name')
+        .order('full_name');
+      
+      if (error) throw error;
+      setUsers(data || []);
+    } catch (error: any) {
+      console.error('Erro ao carregar usuários:', error);
+      toast({
+        title: 'Erro',
+        description: 'Erro ao carregar usuários',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -125,6 +148,7 @@ export const NewTicket = () => {
           priority: formData.priority,
           equipment_model: formData.equipment_model || null,
           serial_number: formData.serial_number || null,
+          assigned_to: formData.assigned_to || null,
           created_by: user.id,
           status: 'open',
           responsibility: 'internal_support',
@@ -277,6 +301,26 @@ export const NewTicket = () => {
                 onChange={(e) => setFormData({ ...formData, serial_number: e.target.value })}
                 placeholder="Digite o número de série do equipamento"
               />
+            </div>
+
+            <div>
+              <Label htmlFor="assigned_to">Responsável</Label>
+              <Select
+                value={formData.assigned_to}
+                onValueChange={(value) => setFormData({ ...formData, assigned_to: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um responsável (opcional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Sem atribuição</SelectItem>
+                  {users.map((user) => (
+                    <SelectItem key={user.user_id} value={user.user_id}>
+                      {user.full_name || 'Usuário sem nome'}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="flex gap-4">
