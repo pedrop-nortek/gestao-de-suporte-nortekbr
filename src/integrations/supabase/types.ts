@@ -470,7 +470,13 @@ export type Database = {
         | "external_support"
         | "other"
       ticket_priority: "low" | "medium" | "high" | "urgent"
-      ticket_status: "open" | "in_progress" | "closed" | "paused"
+      ticket_status:
+        | "open"
+        | "in_progress"
+        | "closed"
+        | "paused"
+        | "pending_customer"
+        | "resolved"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -606,7 +612,14 @@ export const Constants = {
         "other",
       ],
       ticket_priority: ["low", "medium", "high", "urgent"],
-      ticket_status: ["open", "in_progress", "closed", "paused"],
+      ticket_status: [
+        "open",
+        "in_progress",
+        "closed",
+        "paused",
+        "pending_customer",
+        "resolved",
+      ],
     },
   },
 } as const

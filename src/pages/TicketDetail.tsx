@@ -456,19 +456,19 @@ const TicketDetail = () => {
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-      aberto: 'destructive',
-      em_andamento: 'secondary',
-      aguardando_cliente: 'outline',
-      resolvido: 'default',
-      fechado: 'default',
+      open: 'destructive',
+      in_progress: 'secondary',
+      pending_customer: 'outline',
+      resolved: 'default',
+      closed: 'default',
     };
     
     const labels: Record<string, string> = {
-      aberto: 'Aberto',
-      em_andamento: 'Em Andamento',
-      aguardando_cliente: 'Aguardando Cliente',
-      resolvido: 'Resolvido',
-      fechado: 'Fechado',
+      open: 'Aberto',
+      in_progress: 'Em Progresso',
+      pending_customer: 'Aguardando Cliente',
+      resolved: 'Resolvido',
+      closed: 'Fechado',
     };
 
     return (
