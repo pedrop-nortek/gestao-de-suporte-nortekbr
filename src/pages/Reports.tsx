@@ -79,6 +79,22 @@ const PRIORITY_COLORS = {
   'urgent': '#dc2626', // red-600
 };
 
+// Cores para gráficos de pizza (array rotativo)
+const CHART_COLORS = [
+  '#3b82f6', // blue-500
+  '#22c55e', // green-500
+  '#f97316', // orange-500
+  '#a855f7', // purple-500
+  '#06b6d4', // cyan-500
+  '#84cc16', // lime-500
+  '#f59e0b', // amber-500
+  '#ef4444', // red-500
+  '#8b5cf6', // violet-500
+  '#10b981', // emerald-500
+];
+
+const getChartColor = (index: number) => CHART_COLORS[index % CHART_COLORS.length];
+
 export const Reports = () => {
   const [data, setData] = useState<ExtendedReportData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -279,9 +295,9 @@ export const Reports = () => {
             <div key={i} className="h-32 bg-muted rounded animate-pulse" />
           ))}
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-80 bg-muted rounded animate-pulse" />
+            <div key={i} className="h-[350px] bg-muted rounded animate-pulse" />
           ))}
         </div>
       </div>
@@ -297,33 +313,35 @@ export const Reports = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Relatórios</h1>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
           <Filter className="h-4 w-4 text-muted-foreground" />
-          <Select value={selectedYear} onValueChange={setSelectedYear}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {years.map(year => (
-                <SelectItem key={year} value={year}>{year}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-            <SelectTrigger className="w-40">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {months.map(month => (
-                <SelectItem key={month.value} value={month.value}>
-                  {month.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Select value={selectedYear} onValueChange={setSelectedYear}>
+              <SelectTrigger className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {years.map(year => (
+                  <SelectItem key={year} value={year}>{year}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+              <SelectTrigger className="w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {months.map(month => (
+                  <SelectItem key={month.value} value={month.value}>
+                    {month.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
@@ -371,7 +389,7 @@ export const Reports = () => {
       </div>
 
       {/* Gráficos principais */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
         {/* Gráfico de pizza - Status */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
@@ -381,7 +399,7 @@ export const Reports = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="h-[300px]">
+            <ChartContainer config={chartConfig} className="h-[350px]">
               <ResponsiveContainer width="100%" height="100%">
                 <RechartsPieChart>
                   <ChartTooltip content={<ChartTooltipContent />} />
@@ -412,7 +430,7 @@ export const Reports = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="h-[300px]">
+            <ChartContainer config={chartConfig} className="h-[350px]">
               <ResponsiveContainer width="100%" height="100%">
                 <RechartsPieChart>
                   <ChartTooltip content={<ChartTooltipContent />} />
@@ -443,7 +461,7 @@ export const Reports = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="h-[300px]">
+            <ChartContainer config={chartConfig} className="h-[350px]">
               <ResponsiveContainer width="100%" height="100%">
                 <RechartsPieChart>
                   <ChartTooltip content={<ChartTooltipContent />} />
@@ -455,8 +473,11 @@ export const Reports = () => {
                     cy="50%"
                     outerRadius={80}
                     innerRadius={40}
-                    fill="hsl(var(--chart-1))"
-                  />
+                  >
+                    {data.ticketsByCompany.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={getChartColor(index)} />
+                    ))}
+                  </Pie>
                 </RechartsPieChart>
               </ResponsiveContainer>
             </ChartContainer>
@@ -491,7 +512,7 @@ export const Reports = () => {
       </Card>
 
       {/* Gráficos secundários */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
         {/* Gráfico de pizza - Categoria */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
@@ -501,7 +522,7 @@ export const Reports = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="h-[300px]">
+            <ChartContainer config={chartConfig} className="h-[350px]">
               <ResponsiveContainer width="100%" height="100%">
                 <RechartsPieChart>
                   <ChartTooltip content={<ChartTooltipContent />} />
@@ -513,8 +534,11 @@ export const Reports = () => {
                     cy="50%"
                     outerRadius={80}
                     innerRadius={40}
-                    fill="hsl(var(--chart-2))"
-                  />
+                  >
+                    {data.ticketsByCategory.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={getChartColor(index)} />
+                    ))}
+                  </Pie>
                 </RechartsPieChart>
               </ResponsiveContainer>
             </ChartContainer>
@@ -530,7 +554,7 @@ export const Reports = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="h-[300px]">
+            <ChartContainer config={chartConfig} className="h-[350px]">
               <ResponsiveContainer width="100%" height="100%">
                 <RechartsPieChart>
                   <ChartTooltip content={<ChartTooltipContent />} />
@@ -542,8 +566,11 @@ export const Reports = () => {
                     cy="50%"
                     outerRadius={80}
                     innerRadius={40}
-                    fill="hsl(var(--chart-3))"
-                  />
+                  >
+                    {data.ticketsByEquipment.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={getChartColor(index)} />
+                    ))}
+                  </Pie>
                 </RechartsPieChart>
               </ResponsiveContainer>
             </ChartContainer>
@@ -559,7 +586,7 @@ export const Reports = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="h-[300px]">
+            <ChartContainer config={chartConfig} className="h-[350px]">
               <ResponsiveContainer width="100%" height="100%">
                 <RechartsPieChart>
                   <ChartTooltip content={<ChartTooltipContent />} />
@@ -571,8 +598,11 @@ export const Reports = () => {
                     cy="50%"
                     outerRadius={80}
                     innerRadius={40}
-                    fill="hsl(var(--chart-4))"
-                  />
+                  >
+                    {data.ticketsByUser.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={getChartColor(index)} />
+                    ))}
+                  </Pie>
                 </RechartsPieChart>
               </ResponsiveContainer>
             </ChartContainer>
