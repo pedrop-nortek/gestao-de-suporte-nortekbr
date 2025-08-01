@@ -247,8 +247,7 @@ export const NewTicket = () => {
     }
   };
 
-  const handleCreateEquipment = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCreateEquipment = async () => {
     
     if (!equipmentFormData.name.trim()) {
       toast({
@@ -579,7 +578,7 @@ export const NewTicket = () => {
                     <DialogHeader>
                       <DialogTitle>Criar Novo Equipamento</DialogTitle>
                     </DialogHeader>
-                    <form onSubmit={handleCreateEquipment} className="space-y-4">
+                    <div className="space-y-4">
                       <div>
                         <Label htmlFor="equipment-name">Nome *</Label>
                         <Input
@@ -621,11 +620,14 @@ export const NewTicket = () => {
                         >
                           Cancelar
                         </Button>
-                        <Button type="submit">
+                        <Button 
+                          type="button"
+                          onClick={handleCreateEquipment}
+                        >
                           Criar Equipamento
                         </Button>
                       </div>
-                    </form>
+                    </div>
                   </DialogContent>
                 </Dialog>
               </div>

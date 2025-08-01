@@ -61,6 +61,8 @@ const TicketDetail = () => {
         .single();
 
       if (error) throw error;
+      console.log('Ticket data:', data);
+      console.log('Equipment models:', data.equipment_models);
       setTicket(data);
       setNewStatus(data.status);
       setNewAssignedTo(data.assigned_to || 'unassigned');
