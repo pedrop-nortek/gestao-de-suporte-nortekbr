@@ -19,9 +19,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus, Search, Eye, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Plus, Search, Eye, ArrowUpDown, ArrowUp, ArrowDown, Calendar } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { Database } from '@/integrations/supabase/types';
 
 type Ticket = Database['public']['Tables']['tickets']['Row'] & {
@@ -34,6 +36,11 @@ type UserProfile = {
   full_name: string;
 };
 
+type Company = {
+  id: string;
+  name: string;
+};
+
 type SortField = 'ticket_number' | 'title' | 'company' | 'priority' | 'status' | 'category' | 'created_at' | 'assigned_to';
 type SortDirection = 'asc' | 'desc';
 
@@ -44,12 +51,20 @@ const Dashboard = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [companyFilter, setCompanyFilter] = useState<string>('all');
+  const [assignedFilter, setAssignedFilter] = useState<string>('all');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [users, setUsers] = useState<UserProfile[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
     fetchTickets();
+    fetchCompanies();
+    fetchUsers();
   }, []);
 
   const fetchTickets = async () => {
@@ -76,6 +91,34 @@ const Dashboard = () => {
     }
   };
 
+  const fetchCompanies = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('companies')
+        .select('id, name')
+        .order('name');
+
+      if (error) throw error;
+      setCompanies(data || []);
+    } catch (error) {
+      console.error('Erro ao carregar empresas:', error);
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('user_id, full_name')
+        .order('full_name');
+
+      if (error) throw error;
+      setUsers(data || []);
+    } catch (error) {
+      console.error('Erro ao carregar usuários:', error);
+    }
+  };
+
   const handleSort = (field: SortField) => {
     if (sortField === field) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
@@ -99,10 +142,11 @@ const Dashboard = () => {
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { variant: "default" | "secondary" | "destructive" | "outline", label: string, className?: string }> = {
       open: { variant: 'destructive', label: 'Aberto', className: 'bg-red-500 text-white' },
-      in_progress: { variant: 'secondary', label: 'Em Andamento', className: 'bg-blue-500 text-white' },
+      in_progress: { variant: 'default', label: 'Em Andamento', className: 'bg-green-500 text-white' },
       waiting_customer: { variant: 'outline', label: 'Aguardando Cliente', className: 'bg-yellow-500 text-white' },
       resolved: { variant: 'default', label: 'Resolvido', className: 'bg-green-500 text-white' },
-      closed: { variant: 'default', label: 'Fechado', className: 'bg-gray-500 text-white' },
+      closed: { variant: 'default', label: 'Fechado', className: 'bg-blue-500 text-white' },
+      paused: { variant: 'outline', label: 'Pausado', className: 'bg-white text-black border-gray-300' },
     };
 
     const config = statusConfig[status] || { variant: 'default', label: status };
@@ -138,8 +182,27 @@ const Dashboard = () => {
       const matchesStatus = statusFilter === 'all' || ticket.status === statusFilter;
       const matchesPriority = priorityFilter === 'all' || ticket.priority === priorityFilter;
       const matchesCategory = categoryFilter === 'all' || ticket.category === categoryFilter;
+      const matchesCompany = companyFilter === 'all' || ticket.company_id === companyFilter;
+      const matchesAssigned = assignedFilter === 'all' || ticket.assigned_to === assignedFilter;
       
-      return matchesSearch && matchesStatus && matchesPriority && matchesCategory;
+      // Filter by date range
+      let matchesDateRange = true;
+      if (startDate || endDate) {
+        const ticketDate = new Date(ticket.created_at);
+        if (startDate) {
+          const start = new Date(startDate);
+          start.setHours(0, 0, 0, 0);
+          matchesDateRange = matchesDateRange && ticketDate >= start;
+        }
+        if (endDate) {
+          const end = new Date(endDate);
+          end.setHours(23, 59, 59, 999);
+          matchesDateRange = matchesDateRange && ticketDate <= end;
+        }
+      }
+      
+      return matchesSearch && matchesStatus && matchesPriority && matchesCategory && 
+             matchesCompany && matchesAssigned && matchesDateRange;
     })
     .sort((a, b) => {
       let aValue: any;
@@ -198,8 +261,8 @@ const Dashboard = () => {
           <CardTitle>Filtros</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="relative">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="relative md:col-span-2 lg:col-span-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Buscar tickets..."
@@ -220,6 +283,7 @@ const Dashboard = () => {
                 <SelectItem value="waiting_customer">Aguardando Cliente</SelectItem>
                 <SelectItem value="resolved">Resolvido</SelectItem>
                 <SelectItem value="closed">Fechado</SelectItem>
+                <SelectItem value="paused">Pausado</SelectItem>
               </SelectContent>
             </Select>
 
@@ -247,6 +311,59 @@ const Dashboard = () => {
                 <SelectItem value="Suporte Técnico">Suporte Técnico</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Select value={companyFilter} onValueChange={setCompanyFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Empresa" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as Empresas</SelectItem>
+                {companies.map((company) => (
+                  <SelectItem key={company.id} value={company.id}>
+                    {company.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={assignedFilter} onValueChange={setAssignedFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Responsável" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os Responsáveis</SelectItem>
+                <SelectItem value="">Não atribuído</SelectItem>
+                {users.filter(user => user.full_name).map((user) => (
+                  <SelectItem key={user.user_id} value={user.user_id}>
+                    {user.full_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <div className="relative">
+              <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="date"
+                placeholder="Data inicial"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+
+            <div className="relative">
+              <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="date"
+                placeholder="Data final"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="pl-9"
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
