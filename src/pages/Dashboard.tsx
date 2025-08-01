@@ -187,11 +187,14 @@ const Dashboard = () => {
                               (assignedFilter === 'unassigned' && !ticket.assigned_to) ||
                               ticket.assigned_to === assignedFilter;
       
-      // Filter by date range
+      // Filter by date range using date-fns for consistent formatting
       let matchesDateRange = true;
       if (startDate || endDate) {
-        // Extrair apenas a parte da data (YYYY-MM-DD) do timestamp do ticket
-        const ticketDateString = new Date(ticket.created_at).toISOString().split('T')[0];
+        // Usar date-fns para formatar a data do ticket de forma consistente
+        const ticketDateString = format(new Date(ticket.created_at), 'yyyy-MM-dd');
+        
+        // Log temporário para debug
+        console.log('Ticket:', ticket.ticket_number, 'Date:', ticketDateString, 'Start:', startDate, 'End:', endDate);
         
         if (startDate) {
           matchesDateRange = matchesDateRange && ticketDateString >= startDate;
