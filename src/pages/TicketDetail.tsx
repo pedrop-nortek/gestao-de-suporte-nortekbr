@@ -408,9 +408,26 @@ const TicketDetail = () => {
     if (!newStatus || newStatus === ticket?.status) return;
 
     try {
+      const oldStatus = ticket?.status;
+      const statusLabels: Record<string, string> = {
+        new: 'Novo',
+        open: 'Aberto', 
+        pending: 'Aguardando',
+        resolved: 'Resolvido',
+        unresolved: 'Não resolvido',
+      };
+
+      // Add log entry for status change
+      const logEntry = `[${new Date().toLocaleString('pt-BR')}] Status alterado de "${statusLabels[oldStatus || '']}" para "${statusLabels[newStatus]}"`;
+      const currentLog = ticket?.ticket_log || '';
+      const newLog = currentLog ? `${currentLog}\n${logEntry}` : logEntry;
+
       const { error } = await supabase
         .from('tickets')
-        .update({ status: newStatus })
+        .update({ 
+          status: newStatus,
+          ticket_log: newLog 
+        })
         .eq('id', id);
 
       if (error) throw error;
@@ -455,25 +472,19 @@ const TicketDetail = () => {
   };
 
   const getStatusBadge = (status: string) => {
-    const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-      open: 'destructive',
-      in_progress: 'secondary',
-      pending_customer: 'outline',
-      resolved: 'default',
-      closed: 'default',
+    const statusConfig: Record<string, { variant: "default" | "secondary" | "destructive" | "outline", label: string, className: string }> = {
+      new: { variant: 'destructive', label: 'Novo', className: 'bg-red-500 hover:bg-red-600 text-white' },
+      open: { variant: 'secondary', label: 'Aberto', className: 'bg-yellow-500 hover:bg-yellow-600 text-white' },
+      pending: { variant: 'outline', label: 'Aguardando', className: 'bg-purple-500 hover:bg-purple-600 text-white border-purple-500' },
+      resolved: { variant: 'default', label: 'Resolvido', className: 'bg-green-500 hover:bg-green-600 text-white' },
+      unresolved: { variant: 'outline', label: 'Não resolvido', className: '' },
     };
     
-    const labels: Record<string, string> = {
-      open: 'Aberto',
-      in_progress: 'Em Progresso',
-      pending_customer: 'Aguardando Cliente',
-      resolved: 'Resolvido',
-      closed: 'Fechado',
-    };
+    const config = statusConfig[status] || { variant: 'outline', label: status, className: '' };
 
     return (
-      <Badge variant={variants[status] || 'default'}>
-        {labels[status] || status}
+      <Badge variant={config.variant} className={config.className}>
+        {config.label}
       </Badge>
     );
   };
@@ -861,11 +872,11 @@ const TicketDetail = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="new">Novo</SelectItem>
                     <SelectItem value="open">Aberto</SelectItem>
-                    <SelectItem value="in_progress">Em Andamento</SelectItem>
-                    <SelectItem value="pending_customer">Aguardando Cliente</SelectItem>
+                    <SelectItem value="pending">Aguardando</SelectItem>
                     <SelectItem value="resolved">Resolvido</SelectItem>
-                    <SelectItem value="closed">Fechado</SelectItem>
+                    <SelectItem value="unresolved">Não resolvido</SelectItem>
                   </SelectContent>
                 </Select>
                 <Button onClick={updateStatus} size="sm" disabled={newStatus === ticket.status}>

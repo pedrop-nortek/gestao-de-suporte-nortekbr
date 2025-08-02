@@ -16,6 +16,7 @@ interface ExtendedReportData {
   closedTickets: number;
   inProgressTickets: number;
   pausedTickets: number;
+  resolvedTickets: number;
   avgResolutionTime: number;
   ticketsByPriority: Array<{ name: string; value: number; color: string }>;
   ticketsByStatus: Array<{ name: string; value: number; color: string }>;
@@ -66,10 +67,11 @@ const chartConfig = {
 };
 
 const STATUS_COLORS = {
-  'open': '#ef4444', // red-500 - mesmo que na lista de tickets
-  'in_progress': '#22c55e', // green-500
-  'closed': '#3b82f6', // blue-500
-  'paused': '#6b7280', // gray-500
+  'new': '#dc2626', // red-600 - Novo (vermelho)
+  'open': '#facc15', // yellow-400 - Aberto (amarelo)
+  'pending': '#a855f7', // purple-500 - Aguardando (roxo)
+  'resolved': '#22c55e', // green-500 - Resolvido (verde)
+  'unresolved': '#6b7280', // gray-500 - Não resolvido
 };
 
 const PRIORITY_COLORS = {
@@ -201,17 +203,19 @@ export const Reports = () => {
       if (ticketsError) throw ticketsError;
 
       const totalTickets = tickets?.length || 0;
+      const newTickets = tickets?.filter(t => t.status === 'new').length || 0;
       const openTickets = tickets?.filter(t => t.status === 'open').length || 0;
-      const closedTickets = tickets?.filter(t => t.status === 'closed').length || 0;
-      const inProgressTickets = tickets?.filter(t => t.status === 'in_progress').length || 0;
-      const pausedTickets = tickets?.filter(t => t.status === 'paused').length || 0;
+      const pendingTickets = tickets?.filter(t => t.status === 'pending').length || 0;
+      const resolvedTickets = tickets?.filter(t => t.status === 'resolved').length || 0;
+      const unresolvedTickets = tickets?.filter(t => t.status === 'unresolved').length || 0;
 
       // Dados para gráfico de pizza - Status
       const ticketsByStatus = [
-        { name: 'Abertos', value: openTickets, color: STATUS_COLORS.open },
-        { name: 'Em Andamento', value: inProgressTickets, color: STATUS_COLORS.in_progress },
-        { name: 'Fechados', value: closedTickets, color: STATUS_COLORS.closed },
-        { name: 'Pausados', value: pausedTickets, color: STATUS_COLORS.paused },
+        { name: 'Novo', value: newTickets, color: STATUS_COLORS.new },
+        { name: 'Aberto', value: openTickets, color: STATUS_COLORS.open },
+        { name: 'Aguardando', value: pendingTickets, color: STATUS_COLORS.pending },
+        { name: 'Resolvido', value: resolvedTickets, color: STATUS_COLORS.resolved },
+        { name: 'Não resolvido', value: unresolvedTickets, color: STATUS_COLORS.unresolved },
       ].filter(item => item.value > 0);
 
       // Dados para gráfico de pizza - Prioridade
@@ -348,10 +352,10 @@ export const Reports = () => {
 
       setData({
         totalTickets,
-        openTickets,
-        closedTickets,
-        inProgressTickets,
-        pausedTickets,
+        openTickets: openTickets, // Renomeado mas mantido para compatibilidade
+        closedTickets: unresolvedTickets, // Fechados agora são "Não resolvidos"
+        inProgressTickets: newTickets, // Em andamento agora são "Novo"
+        pausedTickets: pendingTickets, // Pausados agora são "Aguardando"
         avgResolutionTime,
         ticketsByPriority,
         ticketsByStatus,
@@ -360,6 +364,7 @@ export const Reports = () => {
         ticketsByEquipment,
         ticketsByUser,
         ticketsOverTime,
+        resolvedTickets, // Add resolvedTickets to data
       });
     } catch (error: any) {
       console.error('Erro ao carregar relatórios:', error);
@@ -444,21 +449,21 @@ export const Reports = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tickets Abertos</CardTitle>
+            <CardTitle className="text-sm font-medium">Tickets Novos</CardTitle>
             <AlertCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{data.openTickets}</div>
+            <div className="text-2xl font-bold">{data.inProgressTickets}</div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tickets Fechados</CardTitle>
+            <CardTitle className="text-sm font-medium">Tickets Resolvidos</CardTitle>
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{data.closedTickets}</div>
+            <div className="text-2xl font-bold">{data.resolvedTickets}</div>
           </CardContent>
         </Card>
 

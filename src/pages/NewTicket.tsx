@@ -326,7 +326,7 @@ export const NewTicket = () => {
           contact_id: formData.contact_id || null,
           assigned_to: formData.assigned_to === 'unassigned' ? null : formData.assigned_to,
           created_by: user.id,
-          status: 'open',
+          status: 'new',
           responsibility: 'internal_support',
           channel: 'manual',
         })

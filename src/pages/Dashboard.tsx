@@ -142,16 +142,15 @@ const Dashboard = () => {
   };
 
   const getStatusBadge = (status: string) => {
-    const statusConfig: Record<string, { variant: "default" | "secondary" | "destructive" | "outline", label: string, className?: string }> = {
-      open: { variant: 'destructive', label: 'Aberto', className: 'bg-red-500 text-white' },
-      in_progress: { variant: 'default', label: 'Em Andamento', className: 'bg-green-500 text-white' },
-      waiting_customer: { variant: 'outline', label: 'Aguardando Cliente', className: 'bg-yellow-500 text-white' },
-      resolved: { variant: 'default', label: 'Resolvido', className: 'bg-green-500 text-white' },
-      closed: { variant: 'default', label: 'Fechado', className: 'bg-blue-500 text-white' },
-      paused: { variant: 'outline', label: 'Pausado', className: 'bg-white text-black border-gray-300' },
+    const statusConfig: Record<string, { variant: "default" | "secondary" | "destructive" | "outline", label: string, className: string }> = {
+      new: { variant: 'destructive', label: 'Novo', className: 'bg-red-500 hover:bg-red-600 text-white' },
+      open: { variant: 'secondary', label: 'Aberto', className: 'bg-yellow-500 hover:bg-yellow-600 text-white' },
+      pending: { variant: 'outline', label: 'Aguardando', className: 'bg-purple-500 hover:bg-purple-600 text-white border-purple-500' },
+      resolved: { variant: 'default', label: 'Resolvido', className: 'bg-green-500 hover:bg-green-600 text-white' },
+      unresolved: { variant: 'outline', label: 'Não resolvido', className: '' },
     };
 
-    const config = statusConfig[status] || { variant: 'default', label: status };
+    const config = statusConfig[status] || { variant: 'default', label: status, className: '' };
     
     return (
       <Badge variant={config.variant} className={config.className}>
@@ -287,12 +286,11 @@ const Dashboard = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos os Status</SelectItem>
+                <SelectItem value="new">Novo</SelectItem>
                 <SelectItem value="open">Aberto</SelectItem>
-                <SelectItem value="in_progress">Em Andamento</SelectItem>
-                <SelectItem value="waiting_customer">Aguardando Cliente</SelectItem>
+                <SelectItem value="pending">Aguardando</SelectItem>
                 <SelectItem value="resolved">Resolvido</SelectItem>
-                <SelectItem value="closed">Fechado</SelectItem>
-                <SelectItem value="paused">Pausado</SelectItem>
+                <SelectItem value="unresolved">Não resolvido</SelectItem>
               </SelectContent>
             </Select>
 
