@@ -102,6 +102,25 @@ export default function RMADetail() {
         completed_by: isCompleted ? user?.id : null,
       };
 
+      // Handle first step - add RMA number
+      if (stepOrder === 1 && isCompleted) {
+        const rmaNumber = prompt('Digite o número do RMA:');
+        if (!rmaNumber?.trim()) {
+          toast({
+            title: "Erro",
+            description: "Número do RMA é obrigatório para concluir esta etapa",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Update RMA with the number
+        await supabase
+          .from('rma_requests')
+          .update({ rma_number: rmaNumber.trim() })
+          .eq('id', id);
+      }
+
       // Handle functionality notes for the last step
       if (stepOrder === 9) {
         if (!isCompleted) {
@@ -204,7 +223,7 @@ export default function RMADetail() {
           Voltar
         </Button>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">RMA #{rma.rma_number}</h1>
+          <h1 className="text-3xl font-bold tracking-tight">RMA #{rma.rma_number || 'Aguardando número'}</h1>
           <p className="text-muted-foreground">
             Ticket #{rma.ticket?.ticket_number} - {rma.ticket?.title}
           </p>
@@ -223,7 +242,7 @@ export default function RMADetail() {
           <CardContent className="space-y-4">
             <div>
               <label className="text-sm font-medium">Número RMA</label>
-              <p className="text-sm text-muted-foreground">{rma.rma_number}</p>
+              <p className="text-sm text-muted-foreground">{rma.rma_number || 'Aguardando número'}</p>
             </div>
             <div>
               <label className="text-sm font-medium">Status</label>

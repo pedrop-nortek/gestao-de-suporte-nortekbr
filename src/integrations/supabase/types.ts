@@ -120,7 +120,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           id: string
-          rma_number: string
+          rma_number: string | null
           status: string
           ticket_id: string
           updated_at: string
@@ -129,7 +129,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
-          rma_number: string
+          rma_number?: string | null
           status?: string
           ticket_id: string
           updated_at?: string
@@ -138,7 +138,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
-          rma_number?: string
+          rma_number?: string | null
           status?: string
           ticket_id?: string
           updated_at?: string

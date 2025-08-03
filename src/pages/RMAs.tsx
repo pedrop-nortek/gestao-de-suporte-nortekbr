@@ -77,7 +77,7 @@ export default function RMAs() {
   };
 
   const filteredRMAs = rmas.filter(rma =>
-    rma.rma_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (rma.rma_number?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
     rma.ticket?.title?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -179,7 +179,7 @@ export default function RMAs() {
               <CardHeader>
                 <div className="flex justify-between items-start">
                   <div>
-                    <CardTitle className="text-lg">RMA #{rma.rma_number}</CardTitle>
+                    <CardTitle className="text-lg">RMA #{rma.rma_number || 'Aguardando número'}</CardTitle>
                     <CardDescription>
                       Ticket #{rma.ticket?.ticket_number} - {rma.ticket?.title}
                     </CardDescription>

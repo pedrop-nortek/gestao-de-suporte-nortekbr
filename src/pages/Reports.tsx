@@ -195,7 +195,8 @@ export const Reports = () => {
         .select(`
           *,
           companies (name),
-          user_profiles!tickets_assigned_to_fkey (full_name)
+          user_profiles!tickets_assigned_to_fkey (full_name),
+          equipment_models (name)
         `)
         .gte('created_at', startDate)
         .lte('created_at', endDate);
@@ -258,7 +259,7 @@ export const Reports = () => {
       // Tickets por equipamento
       const equipmentMap = new Map();
       tickets?.forEach(ticket => {
-        const equipment = ticket.equipment_model || 'Sem modelo';
+        const equipment = ticket.equipment_models?.name || 'Sem modelo';
         equipmentMap.set(equipment, (equipmentMap.get(equipment) || 0) + 1);
       });
       const ticketsByEquipment = Array.from(equipmentMap.entries())
@@ -348,7 +349,21 @@ export const Reports = () => {
         currentMonth = addMonths(currentMonth, 1);
       }
 
-      const avgResolutionTime = 2.5; // Placeholder
+      // Calculate real average resolution time
+      const resolvedTicketsList = tickets?.filter(t => t.status === 'resolved') || [];
+      let avgResolutionTime = 0;
+      
+      if (resolvedTicketsList.length > 0) {
+        const totalResolutionDays = resolvedTicketsList.reduce((total, ticket) => {
+          const createdAt = parseISO(ticket.created_at);
+          const updatedAt = parseISO(ticket.updated_at);
+          const diffInMs = updatedAt.getTime() - createdAt.getTime();
+          const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
+          return total + diffInDays;
+        }, 0);
+        
+        avgResolutionTime = Number((totalResolutionDays / resolvedTicketsList.length).toFixed(1));
+      }
 
       setData({
         totalTickets,

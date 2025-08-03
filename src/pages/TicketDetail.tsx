@@ -285,14 +285,14 @@ const TicketDetail = () => {
   };
 
   const createRMA = async () => {
-    if (!rmaNumber.trim() || !ticket) return;
+    if (!ticket) return;
 
     try {
       const { data, error } = await supabase
         .from('rma_requests')
         .insert({
           ticket_id: ticket.id,
-          rma_number: rmaNumber.trim(),
+          rma_number: null, // Will be added when first step is completed
           created_by: user?.id,
         })
         .select()
@@ -310,7 +310,7 @@ const TicketDetail = () => {
 
       // Add log entry about RMA creation
       const timestamp = new Date().toLocaleString('pt-BR');
-      const logEntry = `\n[${timestamp}]\nRMA criado: ${rmaNumber.trim()}\n`;
+      const logEntry = `\n[${timestamp}]\nRMA criado (número será adicionado na primeira etapa)\n`;
       const updatedLog = (ticket.ticket_log || '') + logEntry;
 
       await supabase
@@ -836,14 +836,11 @@ const TicketDetail = () => {
             {showCreateRMA && (
               <div className="border-t pt-4 space-y-3">
                 <Label>Criar RMA para este ticket:</Label>
+                <p className="text-sm text-muted-foreground">
+                  O número do RMA será adicionado quando a primeira etapa for concluída.
+                </p>
                 <div className="flex gap-2">
-                  <Input
-                    placeholder="Número do RMA"
-                    value={rmaNumber}
-                    onChange={(e) => setRmaNumber(e.target.value)}
-                    className="flex-1"
-                  />
-                  <Button onClick={createRMA} disabled={!rmaNumber.trim()}>
+                  <Button onClick={createRMA}>
                     Criar RMA
                   </Button>
                   <Button 
