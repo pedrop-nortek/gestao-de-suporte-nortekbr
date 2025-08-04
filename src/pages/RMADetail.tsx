@@ -5,10 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, ArrowLeft, Package, Calendar, User } from 'lucide-react';
+import { Loader2, ArrowLeft, Package, Calendar, User, Trash2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface RMAStep {
   id: string;
@@ -119,6 +122,24 @@ export default function RMADetail() {
           .from('rma_requests')
           .update({ rma_number: rmaNumber.trim() })
           .eq('id', id);
+
+        // Add log entry to ticket for RMA number assignment
+        const { data: ticket } = await supabase
+          .from('tickets')
+          .select('ticket_log')
+          .eq('id', rma?.ticket_id)
+          .single();
+
+        if (ticket) {
+          const logEntry = `RMA #${rmaNumber.trim()} criado e número atribuído em ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: ptBR })}`;
+          const currentLog = ticket.ticket_log || '';
+          const updatedLog = currentLog ? `${currentLog}\n${logEntry}` : logEntry;
+
+          await supabase
+            .from('tickets')
+            .update({ ticket_log: updatedLog })
+            .eq('id', rma?.ticket_id);
+        }
       }
 
       // Handle functionality notes for the last step
@@ -156,6 +177,56 @@ export default function RMADetail() {
       toast({
         title: "Erro",
         description: "Não foi possível atualizar a etapa",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const deleteRMA = async () => {
+    if (!rma) return;
+
+    try {
+      // Delete all RMA steps first (foreign key constraint)
+      await supabase
+        .from('rma_steps')
+        .delete()
+        .eq('rma_id', rma.id);
+
+      // Delete the RMA request
+      await supabase
+        .from('rma_requests')
+        .delete()
+        .eq('id', rma.id);
+
+      // Add log entry to ticket
+      const { data: ticket } = await supabase
+        .from('tickets')
+        .select('ticket_log')
+        .eq('id', rma.ticket_id)
+        .single();
+
+      if (ticket) {
+        const logEntry = `RMA ${rma.rma_number || 'sem número'} excluído em ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: ptBR })}`;
+        const currentLog = ticket.ticket_log || '';
+        const updatedLog = currentLog ? `${currentLog}\n${logEntry}` : logEntry;
+
+        await supabase
+          .from('tickets')
+          .update({ ticket_log: updatedLog })
+          .eq('id', rma.ticket_id);
+      }
+
+      toast({
+        title: "Sucesso",
+        description: "RMA excluído com sucesso.",
+      });
+
+      navigate('/dashboard/rmas');
+    } catch (error) {
+      console.error('Error deleting RMA:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir o RMA.",
         variant: "destructive",
       });
     }
@@ -217,17 +288,42 @@ export default function RMADetail() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard/rmas')}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Voltar
-        </Button>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">RMA #{rma.rma_number || 'Aguardando número'}</h1>
-          <p className="text-muted-foreground">
-            Ticket #{rma.ticket?.ticket_number} - {rma.ticket?.title}
-          </p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard/rmas')}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Voltar
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">RMA #{rma.rma_number || 'Aguardando número'}</h1>
+            <p className="text-muted-foreground">
+              Ticket #{rma.ticket?.ticket_number} - {rma.ticket?.title}
+            </p>
+          </div>
         </div>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="destructive" size="sm">
+              <Trash2 className="h-4 w-4 mr-2" />
+              Excluir RMA
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja excluir este RMA? Esta ação não pode ser desfeita.
+                Todas as etapas e dados relacionados serão permanentemente removidos.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={deleteRMA} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Excluir RMA
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">

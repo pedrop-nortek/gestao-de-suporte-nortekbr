@@ -48,6 +48,10 @@ const chartConfig = {
     label: "Pausados",
     color: "hsl(var(--chart-5))",
   },
+  rmas: {
+    label: "RMAs",
+    color: "#facc15",
+  },
   low: {
     label: "Baixa",
     color: "hsl(var(--chart-1))",
@@ -203,6 +207,26 @@ export const Reports = () => {
 
       if (ticketsError) throw ticketsError;
 
+      // Buscar dados dos RMAs para o gráfico
+      let rmaQuery = supabase
+        .from('rma_steps')
+        .select(`
+          completed_at,
+          rma_requests!inner(created_at)
+        `)
+        .eq('step_order', 1)
+        .eq('is_completed', true);
+
+      if (startDate && endDate) {
+        rmaQuery = rmaQuery.gte('completed_at', startDate).lte('completed_at', endDate);
+      }
+
+      const { data: rmaSteps, error: rmaError } = await rmaQuery;
+
+      if (rmaError) {
+        console.error('Error fetching RMA data:', rmaError);
+      }
+
       const totalTickets = tickets?.length || 0;
       const newTickets = tickets?.filter(t => t.status === 'new').length || 0;
       const openTickets = tickets?.filter(t => t.status === 'open').length || 0;
@@ -333,6 +357,15 @@ export const Reports = () => {
             const ticketDate = parseISO(ticket.created_at);
             return ticketDate >= weekStart && ticketDate <= weekEnd;
           }).length || 0;
+
+          // Count RMAs for this week
+          const weekRMAs = rmaSteps?.filter(rmaStep => {
+            if (rmaStep.completed_at) {
+              const rmaDate = parseISO(rmaStep.completed_at);
+              return rmaDate >= weekStart && rmaDate <= weekEnd;
+            }
+            return false;
+          }).length || 0;
           
           // Mostrar nome do mês apenas na semana 2 (centro do mês)
           const monthLabel = week === 2 ? format(currentMonth, 'MMM/yy', { locale: ptBR }) : '';
@@ -341,6 +374,7 @@ export const Reports = () => {
             week: monthLabel,
             weekDetail: `S${week} ${format(currentMonth, 'MMM/yy', { locale: ptBR })}`,
             tickets: weekTickets,
+            rmas: weekRMAs,
             weekOfMonth: week
           });
         }
@@ -757,6 +791,14 @@ export const Reports = () => {
                   strokeWidth={2}
                   dot={{ fill: "hsl(var(--chart-1))", r: 3 }}
                   activeDot={{ r: 5, fill: "hsl(var(--chart-1))" }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="rmas" 
+                  stroke="#facc15" 
+                  strokeWidth={2}
+                  dot={{ fill: "#facc15", r: 3 }}
+                  activeDot={{ r: 5, fill: "#facc15" }}
                 />
               </LineChart>
             </ResponsiveContainer>

@@ -3,10 +3,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Plus, Search, Package, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from "recharts";
 
 interface RMA {
   id: string;
@@ -27,11 +29,13 @@ export default function RMAs() {
   const [rmas, setRmas] = useState<RMA[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [statistics, setStatistics] = useState<any>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchRMAs();
+    fetchStatistics();
   }, []);
 
   const fetchRMAs = async () => {
@@ -66,6 +70,81 @@ export default function RMAs() {
     }
   };
 
+  const fetchStatistics = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('rma_steps')
+        .select(`
+          step_name,
+          step_order,
+          is_completed,
+          completed_at,
+          rma_requests!inner(created_at)
+        `)
+        .eq('is_completed', true);
+
+      if (error) {
+        console.error('Error fetching RMA statistics:', error);
+        return;
+      }
+
+      if (data) {
+        // Calculate average time per step
+        const stepStats = data.reduce((acc, step) => {
+          const stepName = step.step_name;
+          const createdAt = new Date(step.rma_requests.created_at);
+          const completedAt = new Date(step.completed_at);
+          const timeInDays = (completedAt.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24);
+
+          if (!acc[stepName]) {
+            acc[stepName] = { times: [], order: step.step_order };
+          }
+          acc[stepName].times.push(timeInDays);
+          return acc;
+        }, {} as any);
+
+        // Calculate averages and create chart data
+        const chartData = Object.entries(stepStats).map(([stepName, data]: [string, any]) => {
+          const avgTime = data.times.reduce((sum: number, time: number) => sum + time, 0) / data.times.length;
+          return {
+            step: stepName.length > 20 ? stepName.substring(0, 20) + '...' : stepName,
+            fullStep: stepName,
+            avgDays: Math.round(avgTime * 10) / 10,
+            order: data.order
+          };
+        }).sort((a, b) => a.order - b.order);
+
+        // Calculate total process time (completed RMAs)
+        const completedRMAs = await supabase
+          .from('rma_requests')
+          .select(`
+            created_at,
+            rma_steps!inner(step_order, completed_at)
+          `)
+          .eq('rma_steps.step_order', 9)
+          .eq('rma_steps.is_completed', true);
+
+        let avgTotalTime = 0;
+        if (completedRMAs.data && completedRMAs.data.length > 0) {
+          const totalTimes = completedRMAs.data.map(rma => {
+            const createdAt = new Date(rma.created_at);
+            const lastStepCompleted = new Date(rma.rma_steps[0].completed_at);
+            return (lastStepCompleted.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24);
+          });
+          avgTotalTime = totalTimes.reduce((sum, time) => sum + time, 0) / totalTimes.length;
+        }
+
+        setStatistics({
+          chartData,
+          avgTotalTime: Math.round(avgTotalTime * 10) / 10,
+          completedRMAs: completedRMAs.data?.length || 0
+        });
+      }
+    } catch (error) {
+      console.error('Error calculating statistics:', error);
+    }
+  };
+
   const getStatusBadge = (status: string, completedSteps: number, totalSteps: number) => {
     if (status === 'completed') {
       return <Badge variant="default" className="bg-green-100 text-green-800">Concluído</Badge>;
@@ -77,7 +156,7 @@ export default function RMAs() {
   };
 
   const filteredRMAs = rmas.filter(rma =>
-    (rma.rma_number?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
+    (rma.rma_number && rma.rma_number.toLowerCase().includes(searchTerm.toLowerCase())) ||
     rma.ticket?.title?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -146,6 +225,76 @@ export default function RMAs() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Time Statistics */}
+      {statistics && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Tempo Médio por Etapa (dias)</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ChartContainer
+                config={{
+                  avgDays: {
+                    label: "Dias",
+                    color: "hsl(var(--primary))",
+                  },
+                }}
+                className="min-h-[300px]"
+              >
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={statistics.chartData}>
+                    <XAxis 
+                      dataKey="step" 
+                      angle={-45}
+                      textAnchor="end"
+                      height={100}
+                      interval={0}
+                    />
+                    <YAxis />
+                    <ChartTooltip 
+                      content={<ChartTooltipContent 
+                        formatter={(value, name, props) => [
+                          `${value} dias`,
+                          `${props.payload.fullStep}`
+                        ]}
+                      />} 
+                    />
+                    <Bar dataKey="avgDays" fill="var(--color-avgDays)" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Estatísticas do Processo</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">Tempo médio total:</span>
+                <span className="text-lg font-bold">{statistics.avgTotalTime} dias</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">RMAs concluídos:</span>
+                <span className="text-lg font-bold">{statistics.completedRMAs}</span>
+              </div>
+              {statistics.chartData.length > 0 && (
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium">Etapa mais demorada:</span>
+                  <span className="text-lg font-bold">
+                    {statistics.chartData.reduce((max, step) => 
+                      step.avgDays > max.avgDays ? step : max
+                    ).fullStep}
+                  </span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Search */}
       <div className="flex items-center space-x-2">
