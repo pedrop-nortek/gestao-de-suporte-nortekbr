@@ -766,6 +766,9 @@ export const Reports = () => {
                   content={({ active, payload, label }) => {
                     if (active && payload && payload.length) {
                       const data = payload[0].payload;
+                      const ticketsCount = payload.find(p => p.dataKey === 'tickets')?.value || 0;
+                      const rmasCount = payload.find(p => p.dataKey === 'rmas')?.value || 0;
+                      
                       return (
                         <div className="rounded-lg border bg-background p-2 shadow-sm">
                           <div className="grid gap-2">
@@ -773,9 +776,20 @@ export const Reports = () => {
                               <span className="text-[0.70rem] uppercase text-muted-foreground">
                                 {data.weekDetail}
                               </span>
-                              <span className="font-bold text-muted-foreground">
-                                {payload[0].value} tickets
-                              </span>
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                                  <span className="font-bold text-blue-600">
+                                    {ticketsCount} tickets
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                  <span className="font-bold text-yellow-600">
+                                    {rmasCount} RMAs
+                                  </span>
+                                </div>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -789,7 +803,8 @@ export const Reports = () => {
                   dataKey="tickets" 
                   stroke="hsl(var(--chart-1))" 
                   strokeWidth={2}
-                  dot={{ fill: "hsl(var(--chart-1))", r: 3 }}
+                  strokeOpacity={0.8}
+                  dot={{ fill: "hsl(var(--chart-1))", r: 3, fillOpacity: 0.8 }}
                   activeDot={{ r: 5, fill: "hsl(var(--chart-1))" }}
                 />
                 <Line 
@@ -797,7 +812,8 @@ export const Reports = () => {
                   dataKey="rmas" 
                   stroke="#facc15" 
                   strokeWidth={2}
-                  dot={{ fill: "#facc15", r: 3 }}
+                  strokeOpacity={0.8}
+                  dot={{ fill: "#facc15", r: 3, fillOpacity: 0.8 }}
                   activeDot={{ r: 5, fill: "#facc15" }}
                 />
               </LineChart>

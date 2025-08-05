@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, Plus, Search, Package, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from "recharts";
+import { formatDurationFromDays } from "@/lib/utils";
 
 interface RMA {
   id: string;
@@ -110,6 +111,7 @@ export default function RMAs() {
             step: stepName.length > 20 ? stepName.substring(0, 20) + '...' : stepName,
             fullStep: stepName,
             avgDays: Math.round(avgTime * 10) / 10,
+            avgTimeFormatted: formatDurationFromDays(avgTime),
             order: data.order
           };
         }).sort((a, b) => a.order - b.order);
@@ -137,6 +139,7 @@ export default function RMAs() {
         setStatistics({
           chartData,
           avgTotalTime: Math.round(avgTotalTime * 10) / 10,
+          avgTotalTimeFormatted: formatDurationFromDays(avgTotalTime),
           completedRMAs: completedRMAs.data?.length || 0
         });
       }
@@ -231,7 +234,7 @@ export default function RMAs() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>
             <CardHeader>
-              <CardTitle>Tempo Médio por Etapa (dias)</CardTitle>
+              <CardTitle>Tempo Médio por Etapa</CardTitle>
             </CardHeader>
             <CardContent>
               <ChartContainer
@@ -256,7 +259,7 @@ export default function RMAs() {
                     <ChartTooltip 
                       content={<ChartTooltipContent 
                         formatter={(value, name, props) => [
-                          `${value} dias`,
+                          props.payload.avgTimeFormatted,
                           `${props.payload.fullStep}`
                         ]}
                       />} 
@@ -273,10 +276,10 @@ export default function RMAs() {
               <CardTitle>Estatísticas do Processo</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">Tempo médio total:</span>
-                <span className="text-lg font-bold">{statistics.avgTotalTime} dias</span>
-              </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium">Tempo médio total:</span>
+                  <span className="text-lg font-bold">{statistics.avgTotalTimeFormatted}</span>
+                </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">RMAs concluídos:</span>
                 <span className="text-lg font-bold">{statistics.completedRMAs}</span>
