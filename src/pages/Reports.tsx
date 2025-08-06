@@ -8,6 +8,7 @@ import { toast } from '@/hooks/use-toast';
 import { BarChart3, Clock, CheckCircle, AlertCircle, PieChart, TrendingUp, Users, Building2, Wrench, Tag, Filter } from 'lucide-react';
 import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, LineChart, Line, CartesianGrid } from 'recharts';
 import { format, startOfMonth, endOfMonth, startOfYear, endOfYear, parseISO, startOfWeek, endOfWeek, addWeeks, addMonths } from 'date-fns';
+import { formatDurationFromDays } from '@/lib/utils';
 import { ptBR } from 'date-fns/locale';
 import { formatDurationFromDays } from '@/lib/utils';
 
