@@ -318,6 +318,7 @@ export type Database = {
           external_message_id: string | null
           id: string
           priority: Database["public"]["Enums"]["ticket_priority"]
+          resolved_at: string | null
           responsibility: Database["public"]["Enums"]["responsibility_type"]
           serial_number: string | null
           status: Database["public"]["Enums"]["ticket_status"]
@@ -340,6 +341,7 @@ export type Database = {
           external_message_id?: string | null
           id?: string
           priority?: Database["public"]["Enums"]["ticket_priority"]
+          resolved_at?: string | null
           responsibility?: Database["public"]["Enums"]["responsibility_type"]
           serial_number?: string | null
           status?: Database["public"]["Enums"]["ticket_status"]
@@ -362,6 +364,7 @@ export type Database = {
           external_message_id?: string | null
           id?: string
           priority?: Database["public"]["Enums"]["ticket_priority"]
+          resolved_at?: string | null
           responsibility?: Database["public"]["Enums"]["responsibility_type"]
           serial_number?: string | null
           status?: Database["public"]["Enums"]["ticket_status"]
