@@ -10,7 +10,6 @@ import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, BarChart,
 import { format, startOfMonth, endOfMonth, startOfYear, endOfYear, parseISO, startOfWeek, endOfWeek, addWeeks, addMonths } from 'date-fns';
 import { formatDurationFromDays } from '@/lib/utils';
 import { ptBR } from 'date-fns/locale';
-import { formatDurationFromDays } from '@/lib/utils';
 
 interface ExtendedReportData {
   totalTickets: number;
