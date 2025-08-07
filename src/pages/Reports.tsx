@@ -8,7 +8,7 @@ import { toast } from '@/hooks/use-toast';
 import { BarChart3, Clock, CheckCircle, AlertCircle, PieChart, TrendingUp, Users, Building2, Wrench, Tag, Filter } from 'lucide-react';
 import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, LineChart, Line, CartesianGrid } from 'recharts';
 import { format, startOfMonth, endOfMonth, startOfYear, endOfYear, parseISO, startOfWeek, endOfWeek, addWeeks, addMonths } from 'date-fns';
-import { formatDurationFromDays } from '@/lib/utils';
+import { formatDurationFromDays, formatAverageResolutionTime } from '@/lib/utils';
 import { ptBR } from 'date-fns/locale';
 
 interface ExtendedReportData {
@@ -384,20 +384,20 @@ export const Reports = () => {
         currentMonth = addMonths(currentMonth, 1);
       }
 
-      // Calculate real average resolution time
-      const resolvedTicketsList = tickets?.filter(t => t.status === 'resolved') || [];
+      // Calculate real average resolution time using resolved_at
+      const resolvedTicketsList = tickets?.filter(t => t.status === 'resolved' && t.resolved_at) || [];
       let avgResolutionTime = 0;
       
       if (resolvedTicketsList.length > 0) {
-        const totalResolutionDays = resolvedTicketsList.reduce((total, ticket) => {
+        const totalResolutionMinutes = resolvedTicketsList.reduce((total, ticket) => {
           const createdAt = parseISO(ticket.created_at);
-          const updatedAt = parseISO(ticket.updated_at);
-          const diffInMs = updatedAt.getTime() - createdAt.getTime();
-          const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
-          return total + diffInDays;
+          const resolvedAt = parseISO(ticket.resolved_at);
+          const diffInMs = resolvedAt.getTime() - createdAt.getTime();
+          const diffInMinutes = diffInMs / (1000 * 60);
+          return total + diffInMinutes;
         }, 0);
         
-        avgResolutionTime = Number((totalResolutionDays / resolvedTicketsList.length).toFixed(1));
+        avgResolutionTime = Number((totalResolutionMinutes / resolvedTicketsList.length).toFixed(1));
       }
 
       setData({
@@ -523,7 +523,7 @@ export const Reports = () => {
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatDurationFromDays(data.avgResolutionTime)}</div>
+            <div className="text-2xl font-bold">{formatAverageResolutionTime(data.avgResolutionTime)}</div>
           </CardContent>
         </Card>
       </div>
