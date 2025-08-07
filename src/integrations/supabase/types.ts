@@ -463,7 +463,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      can_access_company: {
+        Args: { company_uuid: string }
+        Returns: boolean
+      }
+      get_current_user_role: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
     }
     Enums: {
       communication_channel: "email" | "whatsapp" | "manual" | "internal_note"
