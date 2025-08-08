@@ -9,12 +9,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
-import { Plus, Edit, Trash2, Users } from 'lucide-react';
+import { Plus, Edit, Trash2, Users, RotateCcw } from 'lucide-react';
 import { Database } from '@/integrations/supabase/types';
 import { ContactsManager } from '@/components/ContactsManager';
 
 type Company = Database['public']['Tables']['companies']['Row'];
 type CompanyInsert = Database['public']['Tables']['companies']['Insert'];
+type CompanyWithDeleted = Company & { deleted_at: string | null };
+
 
 export const Companies = () => {
   const { user } = useAuth();
@@ -29,6 +31,9 @@ export const Companies = () => {
     whatsapp_phone: '',
     notes: '',
   });
+  const [showTrash, setShowTrash] = useState(false);
+  const [deletedCompanies, setDeletedCompanies] = useState<Company[]>([]);
+  const [loadingDeleted, setLoadingDeleted] = useState(false);
 
   useEffect(() => {
     fetchCompanies();
@@ -52,6 +57,41 @@ export const Companies = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+  
+  const fetchDeletedCompanies = async () => {
+    try {
+      setLoadingDeleted(true);
+      const { data, error } = await supabase.rpc('list_deleted_companies');
+      if (error) throw error;
+      setDeletedCompanies(data || []);
+    } catch (error: any) {
+      console.error('Erro ao carregar lixeira de empresas:', error);
+      toast({ title: 'Erro', description: 'Erro ao carregar lixeira', variant: 'destructive' });
+    } finally {
+      setLoadingDeleted(false);
+    }
+  };
+
+  const handleRestore = async (id: string) => {
+    try {
+      const { error } = await supabase.rpc('restore_company', { _id: id });
+      if (error) throw error;
+      toast({ title: 'Restaurado', description: 'Empresa restaurada com sucesso' });
+      await fetchCompanies();
+      await fetchDeletedCompanies();
+    } catch (error: any) {
+      console.error('Erro ao restaurar empresa:', error);
+      toast({ title: 'Erro', description: error.message || 'Erro ao restaurar', variant: 'destructive' });
+    }
+  };
+
+  const toggleTrash = async () => {
+    const next = !showTrash;
+    setShowTrash(next);
+    if (next) {
+      await fetchDeletedCompanies();
     }
   };
 
@@ -135,20 +175,17 @@ export const Companies = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Tem certeza que deseja excluir esta empresa?')) return;
+    if (!confirm('Tem certeza que deseja enviar esta empresa para a lixeira?')) return;
 
     try {
-      const { error } = await supabase
-        .from('companies')
-        .delete()
-        .eq('id', id);
-
+      const { error } = await supabase.rpc('soft_delete_company', { _id: id });
       if (error) throw error;
       toast({
-        title: 'Sucesso',
-        description: 'Empresa excluída com sucesso',
+        title: 'Enviado para lixeira',
+        description: 'Você pode restaurar em até 30 dias',
       });
       fetchCompanies();
+      if (showTrash) fetchDeletedCompanies();
     } catch (error: any) {
       console.error('Erro ao excluir empresa:', error);
       toast({
@@ -178,65 +215,71 @@ export const Companies = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Empresas</h1>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Nova Empresa
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>
-                {editingCompany ? 'Editar Empresa' : 'Nova Empresa'}
-              </DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <Label htmlFor="name">Nome *</Label>
-                <Input
-                  id="name"
-                  value={formData.name || ''}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="email">Email Principal</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.primary_email || ''}
-                  onChange={(e) => setFormData({ ...formData, primary_email: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="phone">WhatsApp</Label>
-                <Input
-                  id="phone"
-                  value={formData.whatsapp_phone || ''}
-                  onChange={(e) => setFormData({ ...formData, whatsapp_phone: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="notes">Observações</Label>
-                <Textarea
-                  id="notes"
-                  value={formData.notes || ''}
-                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                />
-              </div>
-              <div className="flex gap-2 pt-4">
-                <Button type="submit" className="flex-1">
-                  {editingCompany ? 'Atualizar' : 'Criar'}
-                </Button>
-                <Button type="button" variant="outline" onClick={handleCloseDialog}>
-                  Cancelar
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={toggleTrash}>
+            <Trash2 className="h-4 w-4 mr-2" />
+            {showTrash ? 'Ocultar Lixeira' : 'Ver Lixeira'}
+          </Button>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Nova Empresa
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>
+                  {editingCompany ? 'Editar Empresa' : 'Nova Empresa'}
+                </DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <Label htmlFor="name">Nome *</Label>
+                  <Input
+                    id="name"
+                    value={formData.name || ''}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="email">Email Principal</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formData.primary_email || ''}
+                    onChange={(e) => setFormData({ ...formData, primary_email: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="phone">WhatsApp</Label>
+                  <Input
+                    id="phone"
+                    value={formData.whatsapp_phone || ''}
+                    onChange={(e) => setFormData({ ...formData, whatsapp_phone: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="notes">Observações</Label>
+                  <Textarea
+                    id="notes"
+                    value={formData.notes || ''}
+                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  />
+                </div>
+                <div className="flex gap-2 pt-4">
+                  <Button type="submit" className="flex-1">
+                    {editingCompany ? 'Atualizar' : 'Criar'}
+                  </Button>
+                  <Button type="button" variant="outline" onClick={handleCloseDialog}>
+                    Cancelar
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <Card>
@@ -301,6 +344,48 @@ export const Companies = () => {
           )}
         </CardContent>
       </Card>
+
+      {showTrash && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Lixeira ({deletedCompanies.length})</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loadingDeleted ? (
+              <p className="text-muted-foreground">Carregando...</p>
+            ) : deletedCompanies.length === 0 ? (
+              <p className="text-muted-foreground">Nada na lixeira (últimos 30 dias)</p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Deletado em</TableHead>
+                    <TableHead className="w-24">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {deletedCompanies.map((company) => (
+                    <TableRow key={company.id}>
+                      <TableCell className="font-medium">{company.name}</TableCell>
+                      <TableCell>
+                        {company.deleted_at ? new Date(company.deleted_at).toLocaleString('pt-BR') : '-'}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="outline" onClick={() => handleRestore(company.id)}>
+                            <RotateCcw className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {selectedCompany && (
         <div className="space-y-4">

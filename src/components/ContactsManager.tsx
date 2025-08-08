@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
-import { Plus, Edit, Trash2, Users } from 'lucide-react';
+import { Plus, Edit, Trash2, Users, RotateCcw } from 'lucide-react';
 import { Database } from '@/integrations/supabase/types';
 
 type Contact = Database['public']['Tables']['contacts']['Row'];
@@ -30,6 +30,9 @@ export const ContactsManager = ({ companyId, companyName }: ContactsManagerProps
     position: '',
     company_id: companyId,
   });
+  const [showTrash, setShowTrash] = useState(false);
+  const [deletedContacts, setDeletedContacts] = useState<Contact[]>([]);
+  const [loadingDeleted, setLoadingDeleted] = useState(false);
 
   useEffect(() => {
     fetchContacts();
@@ -54,6 +57,41 @@ export const ContactsManager = ({ companyId, companyName }: ContactsManagerProps
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchDeletedContacts = async () => {
+    try {
+      setLoadingDeleted(true);
+      const { data, error } = await supabase.rpc('list_deleted_contacts', { _company_id: companyId });
+      if (error) throw error;
+      setDeletedContacts(data || []);
+    } catch (error: any) {
+      console.error('Erro ao carregar lixeira de contatos:', error);
+      toast({ title: 'Erro', description: 'Erro ao carregar lixeira', variant: 'destructive' });
+    } finally {
+      setLoadingDeleted(false);
+    }
+  };
+
+  const handleRestoreContact = async (id: string) => {
+    try {
+      const { error } = await supabase.rpc('restore_contact', { _id: id });
+      if (error) throw error;
+      toast({ title: 'Restaurado', description: 'Contato restaurado com sucesso' });
+      await fetchContacts();
+      await fetchDeletedContacts();
+    } catch (error: any) {
+      console.error('Erro ao restaurar contato:', error);
+      toast({ title: 'Erro', description: error.message || 'Erro ao restaurar', variant: 'destructive' });
+    }
+  };
+
+  const toggleTrash = async () => {
+    const next = !showTrash;
+    setShowTrash(next);
+    if (next) {
+      await fetchDeletedContacts();
     }
   };
 
@@ -130,20 +168,14 @@ export const ContactsManager = ({ companyId, companyName }: ContactsManagerProps
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Tem certeza que deseja excluir este contato?')) return;
+    if (!confirm('Tem certeza que deseja enviar este contato para a lixeira?')) return;
 
     try {
-      const { error } = await supabase
-        .from('contacts')
-        .delete()
-        .eq('id', id);
-
+      const { error } = await supabase.rpc('soft_delete_contact', { _id: id });
       if (error) throw error;
-      toast({
-        title: 'Sucesso',
-        description: 'Contato excluído com sucesso',
-      });
+      toast({ title: 'Enviado para lixeira', description: 'Restaurável por 30 dias' });
       fetchContacts();
+      if (showTrash) fetchDeletedContacts();
     } catch (error: any) {
       console.error('Erro ao excluir contato:', error);
       toast({
@@ -184,65 +216,71 @@ export const ContactsManager = ({ companyId, companyName }: ContactsManagerProps
             <Users className="h-5 w-5" />
             Contatos - {companyName} ({contacts.length})
           </CardTitle>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm">
-                <Plus className="h-4 w-4 mr-2" />
-                Novo Contato
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>
-                  {editingContact ? 'Editar Contato' : 'Novo Contato'}
-                </DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <Label htmlFor="name">Nome *</Label>
-                  <Input
-                    id="name"
-                    value={formData.name || ''}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email || ''}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="phone">Telefone</Label>
-                  <Input
-                    id="phone"
-                    value={formData.phone || ''}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="position">Função</Label>
-                  <Input
-                    id="position"
-                    value={formData.position || ''}
-                    onChange={(e) => setFormData({ ...formData, position: e.target.value })}
-                  />
-                </div>
-                <div className="flex gap-2 pt-4">
-                  <Button type="submit" className="flex-1">
-                    {editingContact ? 'Atualizar' : 'Criar'}
-                  </Button>
-                  <Button type="button" variant="outline" onClick={handleCloseDialog}>
-                    Cancelar
-                  </Button>
-                </div>
-              </form>
-            </DialogContent>
-          </Dialog>
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="outline" onClick={toggleTrash}>
+              <Trash2 className="h-4 w-4 mr-2" />
+              {showTrash ? 'Ocultar Lixeira' : 'Ver Lixeira'}
+            </Button>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Novo Contato
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>
+                    {editingContact ? 'Editar Contato' : 'Novo Contato'}
+                  </DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <Label htmlFor="name">Nome *</Label>
+                    <Input
+                      id="name"
+                      value={formData.name || ''}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={formData.email || ''}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="phone">Telefone</Label>
+                    <Input
+                      id="phone"
+                      value={formData.phone || ''}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="position">Função</Label>
+                    <Input
+                      id="position"
+                      value={formData.position || ''}
+                      onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+                    />
+                  </div>
+                  <div className="flex gap-2 pt-4">
+                    <Button type="submit" className="flex-1">
+                      {editingContact ? 'Atualizar' : 'Criar'}
+                    </Button>
+                    <Button type="button" variant="outline" onClick={handleCloseDialog}>
+                      Cancelar
+                    </Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
       </CardHeader>
       <CardContent>

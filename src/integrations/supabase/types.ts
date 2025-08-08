@@ -17,6 +17,8 @@ export type Database = {
       companies: {
         Row: {
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
           id: string
           name: string
           notes: string | null
@@ -26,6 +28,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           id?: string
           name: string
           notes?: string | null
@@ -35,6 +39,8 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           id?: string
           name?: string
           notes?: string | null
@@ -48,6 +54,8 @@ export type Database = {
         Row: {
           company_id: string
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
           email: string | null
           id: string
           name: string
@@ -58,6 +66,8 @@ export type Database = {
         Insert: {
           company_id: string
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           email?: string | null
           id?: string
           name: string
@@ -68,6 +78,8 @@ export type Database = {
         Update: {
           company_id?: string
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           email?: string | null
           id?: string
           name?: string
@@ -471,9 +483,62 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      hard_delete_old_companies: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      hard_delete_old_contacts: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
+      }
+      list_deleted_companies: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
+          id: string
+          name: string
+          notes: string | null
+          primary_email: string | null
+          updated_at: string
+          whatsapp_phone: string | null
+        }[]
+      }
+      list_deleted_contacts: {
+        Args: { _company_id?: string }
+        Returns: {
+          company_id: string
+          created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
+          email: string | null
+          id: string
+          name: string
+          phone: string | null
+          position: string | null
+          updated_at: string
+        }[]
+      }
+      restore_company: {
+        Args: { _id: string }
+        Returns: undefined
+      }
+      restore_contact: {
+        Args: { _id: string }
+        Returns: undefined
+      }
+      soft_delete_company: {
+        Args: { _id: string }
+        Returns: undefined
+      }
+      soft_delete_contact: {
+        Args: { _id: string }
+        Returns: undefined
       }
     }
     Enums: {
