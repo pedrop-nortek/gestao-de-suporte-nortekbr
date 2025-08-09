@@ -11,6 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Download, Loader2 } from 'lucide-react';
+import { TrashCenter } from '@/components/settings/TrashCenter';
 
 interface UserSettings {
   email_notifications: boolean;
@@ -359,6 +360,15 @@ const Settings = () => {
                 </Button>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Lixeira</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <TrashCenter />
           </CardContent>
         </Card>
       </div>

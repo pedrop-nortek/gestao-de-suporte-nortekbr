@@ -217,10 +217,6 @@ export const ContactsManager = ({ companyId, companyName }: ContactsManagerProps
             Contatos - {companyName} ({contacts.length})
           </CardTitle>
           <div className="flex items-center gap-2">
-            <Button size="sm" variant="outline" onClick={toggleTrash}>
-              <Trash2 className="h-4 w-4 mr-2" />
-              {showTrash ? 'Ocultar Lixeira' : 'Ver Lixeira'}
-            </Button>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button size="sm">

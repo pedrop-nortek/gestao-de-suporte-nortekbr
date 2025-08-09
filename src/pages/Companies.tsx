@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
-import { Plus, Edit, Trash2, Users, RotateCcw } from 'lucide-react';
+import { Plus, Edit, Trash2, Users } from 'lucide-react';
 import { Database } from '@/integrations/supabase/types';
 import { ContactsManager } from '@/components/ContactsManager';
 
@@ -216,10 +216,6 @@ export const Companies = () => {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Empresas</h1>
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={toggleTrash}>
-            <Trash2 className="h-4 w-4 mr-2" />
-            {showTrash ? 'Ocultar Lixeira' : 'Ver Lixeira'}
-          </Button>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button>
@@ -344,48 +340,6 @@ export const Companies = () => {
           )}
         </CardContent>
       </Card>
-
-      {showTrash && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Lixeira ({deletedCompanies.length})</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loadingDeleted ? (
-              <p className="text-muted-foreground">Carregando...</p>
-            ) : deletedCompanies.length === 0 ? (
-              <p className="text-muted-foreground">Nada na lixeira (últimos 30 dias)</p>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Deletado em</TableHead>
-                    <TableHead className="w-24">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {deletedCompanies.map((company) => (
-                    <TableRow key={company.id}>
-                      <TableCell className="font-medium">{company.name}</TableCell>
-                      <TableCell>
-                        {company.deleted_at ? new Date(company.deleted_at).toLocaleString('pt-BR') : '-'}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="outline" onClick={() => handleRestore(company.id)}>
-                            <RotateCcw className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
-      )}
 
       {selectedCompany && (
         <div className="space-y-4">
