@@ -119,13 +119,9 @@ export default function EquipmentModels() {
     if (!confirm('Are you sure you want to delete this equipment model?')) return;
 
     try {
-      const { error } = await supabase
-        .from('equipment_models')
-        .delete()
-        .eq('id', id);
-
+      const { error } = await supabase.rpc('soft_delete_equipment_model', { _id: id });
       if (error) throw error;
-      toast.success('Equipment model deleted successfully');
+      toast.success('Equipment model moved to trash');
       fetchModels();
     } catch (error) {
       console.error('Error deleting equipment model:', error);

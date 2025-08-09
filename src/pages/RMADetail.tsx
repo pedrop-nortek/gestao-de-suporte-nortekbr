@@ -186,17 +186,8 @@ export default function RMADetail() {
     if (!rma) return;
 
     try {
-      // Delete all RMA steps first (foreign key constraint)
-      await supabase
-        .from('rma_steps')
-        .delete()
-        .eq('rma_id', rma.id);
-
-      // Delete the RMA request
-      await supabase
-        .from('rma_requests')
-        .delete()
-        .eq('id', rma.id);
+      // Soft delete via RPC (cascades to steps)
+      await supabase.rpc('soft_delete_rma_request', { _id: rma.id });
 
       // Add log entry to ticket
       const { data: ticket } = await supabase
@@ -206,7 +197,7 @@ export default function RMADetail() {
         .single();
 
       if (ticket) {
-        const logEntry = `RMA ${rma.rma_number || 'sem número'} excluído em ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: ptBR })}`;
+        const logEntry = `RMA ${rma.rma_number || 'sem número'} movido para a lixeira em ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: ptBR })}`;
         const currentLog = ticket.ticket_log || '';
         const updatedLog = currentLog ? `${currentLog}\n${logEntry}` : logEntry;
 
@@ -218,7 +209,7 @@ export default function RMADetail() {
 
       toast({
         title: "Sucesso",
-        description: "RMA excluído com sucesso.",
+        description: "RMA movido para a lixeira.",
       });
 
       navigate('/dashboard/rmas');

@@ -101,6 +101,8 @@ export type Database = {
         Row: {
           category: string | null
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
           description: string | null
           id: string
           manufacturer: string | null
@@ -110,6 +112,8 @@ export type Database = {
         Insert: {
           category?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           description?: string | null
           id?: string
           manufacturer?: string | null
@@ -119,6 +123,8 @@ export type Database = {
         Update: {
           category?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           description?: string | null
           id?: string
           manufacturer?: string | null
@@ -131,6 +137,8 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          deleted_at: string | null
+          deleted_by: string | null
           id: string
           rma_number: string | null
           status: string
@@ -140,6 +148,8 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           id?: string
           rma_number?: string | null
           status?: string
@@ -149,6 +159,8 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           id?: string
           rma_number?: string | null
           status?: string
@@ -170,6 +182,8 @@ export type Database = {
           completed_at: string | null
           completed_by: string | null
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
           functionality_notes: string | null
           id: string
           is_completed: boolean
@@ -182,6 +196,8 @@ export type Database = {
           completed_at?: string | null
           completed_by?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           functionality_notes?: string | null
           id?: string
           is_completed?: boolean
@@ -194,6 +210,8 @@ export type Database = {
           completed_at?: string | null
           completed_by?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           functionality_notes?: string | null
           id?: string
           is_completed?: boolean
@@ -324,6 +342,8 @@ export type Database = {
           contact_id: string | null
           created_at: string
           created_by: string | null
+          deleted_at: string | null
+          deleted_by: string | null
           description: string | null
           equipment_model: string | null
           equipment_model_id: string | null
@@ -347,6 +367,8 @@ export type Database = {
           contact_id?: string | null
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           description?: string | null
           equipment_model?: string | null
           equipment_model_id?: string | null
@@ -370,6 +392,8 @@ export type Database = {
           contact_id?: string | null
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           description?: string | null
           equipment_model?: string | null
           equipment_model_id?: string | null
@@ -491,6 +515,22 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: number
       }
+      hard_delete_old_equipment_models: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      hard_delete_old_rma_requests: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      hard_delete_old_rma_steps: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      hard_delete_old_tickets: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
@@ -524,6 +564,79 @@ export type Database = {
           updated_at: string
         }[]
       }
+      list_deleted_equipment_models: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          category: string | null
+          created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
+          description: string | null
+          id: string
+          manufacturer: string | null
+          name: string
+          updated_at: string
+        }[]
+      }
+      list_deleted_rma_requests: {
+        Args: { _ticket_id?: string }
+        Returns: {
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          deleted_by: string | null
+          id: string
+          rma_number: string | null
+          status: string
+          ticket_id: string
+          updated_at: string
+        }[]
+      }
+      list_deleted_rma_steps: {
+        Args: { _rma_id?: string }
+        Returns: {
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
+          functionality_notes: string | null
+          id: string
+          is_completed: boolean
+          notes: string | null
+          rma_id: string
+          step_name: string
+          step_order: number
+        }[]
+      }
+      list_deleted_tickets: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          assigned_to: string | null
+          category: string | null
+          channel: Database["public"]["Enums"]["communication_channel"]
+          company_id: string | null
+          contact_id: string | null
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          deleted_by: string | null
+          description: string | null
+          equipment_model: string | null
+          equipment_model_id: string | null
+          external_message_id: string | null
+          id: string
+          priority: Database["public"]["Enums"]["ticket_priority"]
+          resolved_at: string | null
+          responsibility: Database["public"]["Enums"]["responsibility_type"]
+          serial_number: string | null
+          status: Database["public"]["Enums"]["ticket_status"]
+          ticket_log: string | null
+          ticket_number: number
+          title: string
+          updated_at: string
+        }[]
+      }
       restore_company: {
         Args: { _id: string }
         Returns: undefined
@@ -532,11 +645,43 @@ export type Database = {
         Args: { _id: string }
         Returns: undefined
       }
+      restore_equipment_model: {
+        Args: { _id: string }
+        Returns: undefined
+      }
+      restore_rma_request: {
+        Args: { _id: string }
+        Returns: undefined
+      }
+      restore_rma_step: {
+        Args: { _id: string }
+        Returns: undefined
+      }
+      restore_ticket: {
+        Args: { _id: string }
+        Returns: undefined
+      }
       soft_delete_company: {
         Args: { _id: string }
         Returns: undefined
       }
       soft_delete_contact: {
+        Args: { _id: string }
+        Returns: undefined
+      }
+      soft_delete_equipment_model: {
+        Args: { _id: string }
+        Returns: undefined
+      }
+      soft_delete_rma_request: {
+        Args: { _id: string }
+        Returns: undefined
+      }
+      soft_delete_rma_step: {
+        Args: { _id: string }
+        Returns: undefined
+      }
+      soft_delete_ticket: {
         Args: { _id: string }
         Returns: undefined
       }
