@@ -834,7 +834,7 @@ export const Reports = () => {
               <div className="space-y-2 text-center">
                 <p className="text-sm text-muted-foreground">Taxa de Resolução</p>
                 <p className="text-2xl font-bold">
-                  {data.totalTickets > 0 ? Math.round((data.closedTickets / data.totalTickets) * 100) : 0}%
+                  {data.totalTickets > 0 ? Math.round((data.resolvedTickets / data.totalTickets) * 100) : 0}%
                 </p>
               </div>
               <div className="space-y-2 text-center">
