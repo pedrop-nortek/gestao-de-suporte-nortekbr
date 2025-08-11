@@ -57,6 +57,7 @@ const editTicketSchema = z.object({
   contact_id: z.string().optional(),
   equipment_model_id: z.string().optional(),
   serial_number: z.string().optional(),
+  country: z.string().optional(),
   priority: z.enum(['low', 'medium', 'high', 'urgent']),
 });
 
@@ -69,7 +70,7 @@ const TicketDetail = () => {
   const { toast } = useToast();
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [users, setUsers] = useState<{ id: string; full_name: string | null; user_id: string }[]>([]);
-  const [companies, setCompanies] = useState<{ id: string; name: string }[]>([]);
+  const [companies, setCompanies] = useState<{ id: string; name: string; country: string | null }[]>([]);
   const [contacts, setContacts] = useState<{ id: string; name: string; company_id: string }[]>([]);
   const [equipmentModels, setEquipmentModels] = useState<{ id: string; name: string }[]>([]);
   const [categories] = useState<string[]>([
@@ -101,6 +102,7 @@ const TicketDetail = () => {
       contact_id: '',
       equipment_model_id: '',
       serial_number: '',
+      country: '',
       priority: 'medium',
     },
   });
@@ -124,6 +126,7 @@ const TicketDetail = () => {
         contact_id: ticket.contact_id || '',
         equipment_model_id: ticket.equipment_model_id || '',
         serial_number: ticket.serial_number || '',
+        country: ticket.country || '',
         priority: ticket.priority || 'medium',
       });
     }
@@ -190,7 +193,7 @@ const TicketDetail = () => {
     try {
       const { data, error } = await supabase
         .from('companies')
-        .select('id, name')
+        .select('id, name, country')
         .order('name');
       
       if (error) throw error;
@@ -350,6 +353,7 @@ const TicketDetail = () => {
           contact_id: data.contact_id || null,
           equipment_model_id: data.equipment_model_id || null,
           serial_number: data.serial_number || null,
+          country: data.country || null,
           priority: data.priority,
         })
         .eq('id', id);
@@ -403,6 +407,15 @@ const TicketDetail = () => {
   const filteredContacts = contacts.filter(contact => 
     !form.watch('company_id') || contact.company_id === form.watch('company_id')
   );
+
+  const watchedCompanyId = form.watch('company_id');
+  useEffect(() => {
+    if (!isEditing) return;
+    const selected = companies.find((c) => c.id === watchedCompanyId);
+    if (selected) {
+      form.setValue('country', selected.country || '');
+    }
+  }, [watchedCompanyId, companies, isEditing, form]);
 
   const updateStatus = async () => {
     if (!newStatus || newStatus === ticket?.status) return;
@@ -757,6 +770,10 @@ const TicketDetail = () => {
                   <div>
                     <Label className="text-sm font-medium">Empresa</Label>
                     <p className="text-sm text-muted-foreground">{ticket.companies?.name || 'Não especificada'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">País do Ticket</Label>
+                    <p className="text-sm text-muted-foreground">{ticket.country || 'Não informado'}</p>
                   </div>
                   <div>
                     <Label className="text-sm font-medium">Contato</Label>
