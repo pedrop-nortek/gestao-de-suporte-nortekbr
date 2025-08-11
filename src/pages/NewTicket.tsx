@@ -39,6 +39,7 @@ interface TicketFormData {
   equipment_model_id: string | null;
   serial_number: string;
   assigned_to: string;
+  country: string; // novo
 }
 
 interface ContactFormData {
@@ -98,6 +99,7 @@ export const NewTicket = () => {
     equipment_model_id: null,
     serial_number: '',
     assigned_to: 'unassigned',
+    country: '', // novo
   });
 
   useEffect(() => {
@@ -110,11 +112,14 @@ export const NewTicket = () => {
   useEffect(() => {
     if (formData.company_id) {
       fetchContactsByCompany(formData.company_id);
+      // Preencher país do ticket com o país da empresa selecionada (padrão)
+      const selectedCompany = companies.find(c => c.id === formData.company_id);
+      setFormData(prev => ({ ...prev, country: (selectedCompany?.country || '') }));
     } else {
       setContacts([]);
       setFormData(prev => ({ ...prev, contact_id: '' }));
     }
-  }, [formData.company_id]);
+  }, [formData.company_id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchCompanies = async () => {
     try {
@@ -329,6 +334,7 @@ export const NewTicket = () => {
           status: 'new',
           responsibility: 'internal_support',
           channel: 'manual',
+          country: formData.country || null, // novo
         })
         .select()
         .single();
@@ -355,6 +361,7 @@ export const NewTicket = () => {
 
   return (
     <div className="space-y-6">
+      {/* ... keep existing code (header) the same ... */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="sm" asChild>
           <Link to="/dashboard">
@@ -371,6 +378,7 @@ export const NewTicket = () => {
         </CardHeader>
         <CardContent>
           <form onSubmit={onSubmit} className="space-y-6">
+            {/* ... keep existing code (title, description) the same ... */}
             <div>
               <Label htmlFor="title">Título *</Label>
               <Input
@@ -391,6 +399,7 @@ export const NewTicket = () => {
               />
             </div>
 
+            {/* Empresa */}
             <div>
               <Label htmlFor="company">Empresa *</Label>
               <Select
@@ -411,6 +420,18 @@ export const NewTicket = () => {
               </Select>
             </div>
 
+            {/* País do Ticket (preenchido automaticamente, mas editável) */}
+            <div>
+              <Label htmlFor="ticket-country">País do Ticket</Label>
+              <Input
+                id="ticket-country"
+                value={formData.country}
+                onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                placeholder="Será preenchido com o país da empresa selecionada (pode editar)"
+              />
+            </div>
+
+            {/* Contato */}
             <div>
               <Label htmlFor="contact">Contato na Empresa</Label>
               <div className="flex gap-2">
@@ -453,6 +474,7 @@ export const NewTicket = () => {
                     <DialogHeader>
                       <DialogTitle>Criar Novo Contato</DialogTitle>
                     </DialogHeader>
+                    {/* ... keep existing code (create contact form) the same ... */}
                     <form onSubmit={handleCreateContact} className="space-y-4">
                       <div>
                         <Label htmlFor="contact-name">Nome *</Label>
@@ -506,6 +528,7 @@ export const NewTicket = () => {
               </div>
             </div>
 
+            {/* ... keep existing code (category, priority, equipment, serial, assigned_to) the same ... */}
             <div>
               <Label htmlFor="category">Categoria *</Label>
               <Select
@@ -547,6 +570,7 @@ export const NewTicket = () => {
             <div>
               <Label htmlFor="equipment_model">Modelo do Equipamento</Label>
               <div className="flex gap-2">
+                {/* ... keep existing code (equipment model select and dialog) the same ... */}
                 <Select
                   value={formData.equipment_model_id}
                   onValueChange={(value) => setFormData({ ...formData, equipment_model_id: value })}

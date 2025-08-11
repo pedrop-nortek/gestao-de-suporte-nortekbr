@@ -30,6 +30,8 @@ export const Companies = () => {
     primary_email: '',
     whatsapp_phone: '',
     notes: '',
+    country: '',
+    website: '',
   });
   const [showTrash, setShowTrash] = useState(false);
   const [deletedCompanies, setDeletedCompanies] = useState<Company[]>([]);
@@ -124,6 +126,8 @@ export const Companies = () => {
             primary_email: formData.primary_email || null,
             whatsapp_phone: formData.whatsapp_phone || null,
             notes: formData.notes || null,
+            country: formData.country || null,
+            website: formData.website || null,
           })
           .eq('id', editingCompany.id);
 
@@ -140,6 +144,8 @@ export const Companies = () => {
             primary_email: formData.primary_email || null,
             whatsapp_phone: formData.whatsapp_phone || null,
             notes: formData.notes || null,
+            country: formData.country || null,
+            website: formData.website || null,
           });
 
         if (error) throw error;
@@ -151,7 +157,7 @@ export const Companies = () => {
 
       setIsDialogOpen(false);
       setEditingCompany(null);
-      setFormData({ name: '', primary_email: '', whatsapp_phone: '', notes: '' });
+      setFormData({ name: '', primary_email: '', whatsapp_phone: '', notes: '', country: '', website: '' });
       fetchCompanies();
     } catch (error: any) {
       console.error('Erro ao salvar empresa:', error);
@@ -170,6 +176,8 @@ export const Companies = () => {
       primary_email: company.primary_email || '',
       whatsapp_phone: company.whatsapp_phone || '',
       notes: company.notes || '',
+      country: company.country || '',
+      website: company.website || '',
     });
     setIsDialogOpen(true);
   };
@@ -199,7 +207,7 @@ export const Companies = () => {
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
     setEditingCompany(null);
-    setFormData({ name: '', primary_email: '', whatsapp_phone: '', notes: '' });
+    setFormData({ name: '', primary_email: '', whatsapp_phone: '', notes: '', country: '', website: '' });
   };
 
   if (loading) {
@@ -239,6 +247,28 @@ export const Companies = () => {
                     required
                   />
                 </div>
+
+                <div>
+                  <Label htmlFor="country">País de atuação</Label>
+                  <Input
+                    id="country"
+                    value={formData.country || ''}
+                    onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                    placeholder="Ex.: Brasil, Norway, USA"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="website">Website</Label>
+                  <Input
+                    id="website"
+                    type="url"
+                    value={formData.website || ''}
+                    onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                    placeholder="https://www.exemplo.com"
+                  />
+                </div>
+
                 <div>
                   <Label htmlFor="email">Email Principal</Label>
                   <Input
@@ -307,32 +337,32 @@ export const Companies = () => {
                     <TableCell>
                       {new Date(company.created_at).toLocaleDateString('pt-BR')}
                     </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setSelectedCompany(company)}
-                        title="Ver contatos"
-                      >
-                        <Users className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleEdit(company)}
-                      >
-                        <Edit className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleDelete(company.id)}
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setSelectedCompany(company)}
+                          title="Ver contatos"
+                        >
+                          <Users className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleEdit(company)}
+                        >
+                          <Edit className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleDelete(company.id)}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

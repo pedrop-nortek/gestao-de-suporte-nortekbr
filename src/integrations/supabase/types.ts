@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       companies: {
         Row: {
+          country: string | null
           created_at: string
           deleted_at: string | null
           deleted_by: string | null
@@ -24,9 +25,11 @@ export type Database = {
           notes: string | null
           primary_email: string | null
           updated_at: string
+          website: string | null
           whatsapp_phone: string | null
         }
         Insert: {
+          country?: string | null
           created_at?: string
           deleted_at?: string | null
           deleted_by?: string | null
@@ -35,9 +38,11 @@ export type Database = {
           notes?: string | null
           primary_email?: string | null
           updated_at?: string
+          website?: string | null
           whatsapp_phone?: string | null
         }
         Update: {
+          country?: string | null
           created_at?: string
           deleted_at?: string | null
           deleted_by?: string | null
@@ -46,6 +51,7 @@ export type Database = {
           notes?: string | null
           primary_email?: string | null
           updated_at?: string
+          website?: string | null
           whatsapp_phone?: string | null
         }
         Relationships: []
@@ -340,6 +346,7 @@ export type Database = {
           channel: Database["public"]["Enums"]["communication_channel"]
           company_id: string | null
           contact_id: string | null
+          country: string | null
           created_at: string
           created_by: string | null
           deleted_at: string | null
@@ -365,6 +372,7 @@ export type Database = {
           channel?: Database["public"]["Enums"]["communication_channel"]
           company_id?: string | null
           contact_id?: string | null
+          country?: string | null
           created_at?: string
           created_by?: string | null
           deleted_at?: string | null
@@ -390,6 +398,7 @@ export type Database = {
           channel?: Database["public"]["Enums"]["communication_channel"]
           company_id?: string | null
           contact_id?: string | null
+          country?: string | null
           created_at?: string
           created_by?: string | null
           deleted_at?: string | null
@@ -538,6 +547,7 @@ export type Database = {
       list_deleted_companies: {
         Args: Record<PropertyKey, never>
         Returns: {
+          country: string | null
           created_at: string
           deleted_at: string | null
           deleted_by: string | null
@@ -546,6 +556,7 @@ export type Database = {
           notes: string | null
           primary_email: string | null
           updated_at: string
+          website: string | null
           whatsapp_phone: string | null
         }[]
       }
@@ -617,6 +628,7 @@ export type Database = {
           channel: Database["public"]["Enums"]["communication_channel"]
           company_id: string | null
           contact_id: string | null
+          country: string | null
           created_at: string
           created_by: string | null
           deleted_at: string | null
