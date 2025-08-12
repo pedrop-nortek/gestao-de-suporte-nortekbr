@@ -115,3 +115,14 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+
+/* Ocean-inspired minimal background */
+@layer utilities {
+  .ocean-bg {
+    background-image:
+      radial-gradient(1200px 600px at 100% -200px, hsl(var(--primary) / 0.08), transparent 60%),
+      radial-gradient(900px 400px at -200px 0, hsl(var(--primary) / 0.06), transparent 55%),
+      linear-gradient(to bottom, hsl(var(--background)), hsl(var(--background)));
+    background-attachment: fixed;
+  }
+}

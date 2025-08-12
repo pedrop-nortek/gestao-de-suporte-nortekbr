@@ -35,7 +35,7 @@ const Index = () => {
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" asChild>
-              <Link to="/solicitantes">Portal do Solicitante</Link>
+              <Link to="/suporte">Portal de Suporte</Link>
             </Button>
             <Button asChild>
               <Link to="/auth">Entrar</Link>
@@ -57,7 +57,7 @@ const Index = () => {
         </p>
         <div className="flex items-center justify-center gap-3">
           <Button size="lg" variant="outline" asChild>
-            <Link to="/solicitantes">Portal do Solicitante</Link>
+            <Link to="/suporte">Portal de Suporte</Link>
           </Button>
           <Button size="lg" asChild>
             <Link to="/auth">Começar Agora</Link>

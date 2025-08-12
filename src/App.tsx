@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
-import Index from "./pages/Index";
+
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
@@ -32,7 +32,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Index />} />
+            <Route path="/" element={<Requesters />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/auth/reset-password" element={<ResetPassword />} />
             <Route path="/dashboard" element={
@@ -106,6 +106,7 @@ const App = () => (
               </ProtectedRoute>
             } />
             <Route path="/solicitantes" element={<Requesters />} />
+            <Route path="/suporte" element={<Requesters />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

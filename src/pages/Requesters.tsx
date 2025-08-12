@@ -84,6 +84,40 @@ export default function Requesters() {
     },
   });
 
+  // SEO + Recuperação de senha via token
+  useEffect(() => {
+    document.title = "Portal de Suporte | Sistema de Tickets";
+
+    const ensureMeta = (name: string) => {
+      let m = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
+      if (!m) {
+        m = document.createElement("meta");
+        m.setAttribute("name", name);
+        document.head.appendChild(m);
+      }
+      return m;
+    };
+
+    const desc = ensureMeta("description");
+    desc.content = "Abra e acompanhe tickets no Portal de Suporte.";
+
+    let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.setAttribute('rel', 'canonical');
+      document.head.appendChild(canonical);
+    }
+    canonical.setAttribute('href', window.location.origin + window.location.pathname);
+
+    const urlHash = window.location.hash;
+    const urlParams = new URLSearchParams(window.location.search);
+    const hashParams = new URLSearchParams(urlHash.substring(1));
+    const hasRecoveryToken = hashParams.get('type') === 'recovery' || urlParams.get('type') === 'recovery';
+    if (hasRecoveryToken) {
+      window.location.href = "/auth/reset-password";
+    }
+  }, []);
+
   // Quando logar, tentar carregar contato existente e empresa associada
   useEffect(() => {
     const loadExistingContact = async () => {
@@ -219,23 +253,31 @@ export default function Requesters() {
 
   if (!user) {
     return (
-      <div className="container mx-auto px-4 py-10 space-y-8">
-        <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold">Portal do Solicitante</h1>
-          <p className="text-muted-foreground">Acesse para criar novos tickets e acompanhar o status.</p>
-        </div>
-        <div className="flex justify-center">
-          <AuthTabs />
+      <div className="min-h-screen ocean-bg">
+        <div className="container mx-auto px-4 py-10 space-y-8">
+          <div className="flex justify-end">
+            <a href="/auth" className="text-sm text-muted-foreground hover:text-foreground">Acesso da equipe</a>
+          </div>
+          <div className="text-center space-y-2">
+            <h1 className="text-3xl font-bold">Portal de Suporte</h1>
+            <p className="text-muted-foreground">Acesse para criar novos tickets e acompanhar o status.</p>
+          </div>
+          <div className="flex justify-center">
+            <AuthTabs />
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-8">
+    <div className="min-h-screen ocean-bg container mx-auto px-4 py-8 space-y-8">
+      <div className="flex justify-end">
+        <a href="/auth" className="text-sm text-muted-foreground hover:text-foreground">Acesso da equipe</a>
+      </div>
       <div className="flex items-center justify-between">
         <div className="space-y-1">
-          <h1 className="text-3xl font-bold">Portal do Solicitante</h1>
+          <h1 className="text-3xl font-bold">Portal de Suporte</h1>
           <p className="text-muted-foreground">Vincule sua empresa e abra novos tickets de suporte.</p>
         </div>
       </div>
