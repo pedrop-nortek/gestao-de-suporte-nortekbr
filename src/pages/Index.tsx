@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -32,9 +33,14 @@ const Index = () => {
             <Ticket className="h-8 w-8 text-primary" />
             <h1 className="text-2xl font-bold">Sistema de Tickets</h1>
           </div>
-          <Button asChild>
-            <Link to="/auth">Entrar</Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" asChild>
+              <Link to="/solicitantes">Portal do Solicitante</Link>
+            </Button>
+            <Button asChild>
+              <Link to="/auth">Entrar</Link>
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -49,9 +55,14 @@ const Index = () => {
           Sistema completo para gestão de tickets de suporte com múltiplos canais, 
           categorização inteligente e acompanhamento em tempo real.
         </p>
-        <Button size="lg" asChild>
-          <Link to="/auth">Começar Agora</Link>
-        </Button>
+        <div className="flex items-center justify-center gap-3">
+          <Button size="lg" variant="outline" asChild>
+            <Link to="/solicitantes">Portal do Solicitante</Link>
+          </Button>
+          <Button size="lg" asChild>
+            <Link to="/auth">Começar Agora</Link>
+          </Button>
+        </div>
       </section>
 
       {/* Features Section */}

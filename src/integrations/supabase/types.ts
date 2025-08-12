@@ -68,6 +68,7 @@ export type Database = {
           phone: string | null
           position: string | null
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           company_id: string
@@ -80,6 +81,7 @@ export type Database = {
           phone?: string | null
           position?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           company_id?: string
@@ -92,6 +94,7 @@ export type Database = {
           phone?: string | null
           position?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -100,6 +103,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contacts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -512,6 +522,15 @@ export type Database = {
         Args: { company_uuid: string }
         Returns: boolean
       }
+      ensure_contact_for_current_user: {
+        Args: {
+          _company_id: string
+          _name: string
+          _email?: string
+          _phone?: string
+        }
+        Returns: string
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -573,6 +592,7 @@ export type Database = {
           phone: string | null
           position: string | null
           updated_at: string
+          user_id: string | null
         }[]
       }
       list_deleted_equipment_models: {
@@ -696,6 +716,10 @@ export type Database = {
       soft_delete_ticket: {
         Args: { _id: string }
         Returns: undefined
+      }
+      upsert_company_by_name_country: {
+        Args: { _name: string; _country: string; _website?: string }
+        Returns: string
       }
     }
     Enums: {
