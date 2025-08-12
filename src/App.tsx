@@ -19,6 +19,7 @@ import RMADetail from "./pages/RMADetail";
 import { Reports } from "./pages/Reports";
 import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
+import Requesters from "./pages/Requesters";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -104,6 +105,7 @@ const App = () => (
                 </DashboardLayout>
               </ProtectedRoute>
             } />
+            <Route path="/solicitantes" element={<Requesters />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
