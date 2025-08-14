@@ -551,7 +551,7 @@ const TicketDetail = () => {
               <AlertDialogHeader>
                 <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Tem certeza que deseja excluir este ticket? Esta ação não pode ser desfeita.
+                  Tem certeza que deseja excluir este ticket? O ticket será movido para a lixeira e poderá ser restaurado por 30 dias.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
