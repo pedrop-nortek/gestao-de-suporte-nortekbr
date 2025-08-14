@@ -381,9 +381,7 @@ const TicketDetail = () => {
     setDeleteLoading(true);
     try {
       const { error } = await supabase
-        .from('tickets')
-        .delete()
-        .eq('id', id);
+        .rpc('soft_delete_ticket', { _id: id });
 
       if (error) throw error;
 
