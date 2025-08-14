@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.12 (cd3cf9e)"
@@ -525,8 +525,8 @@ export type Database = {
       ensure_contact_for_current_user: {
         Args: {
           _company_id: string
-          _name: string
           _email?: string
+          _name: string
           _phone?: string
         }
         Returns: string
@@ -718,7 +718,7 @@ export type Database = {
         Returns: undefined
       }
       upsert_company_by_name_country: {
-        Args: { _name: string; _country: string; _website?: string }
+        Args: { _country: string; _name: string; _website?: string }
         Returns: string
       }
     }
