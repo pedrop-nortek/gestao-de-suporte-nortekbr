@@ -29,23 +29,68 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+      async (event, session) => {
+        if (!isMounted) return;
+        
+        console.log('[AUTH] Event:', event, 'Session:', session?.user?.id, 'User Role:', session?.user?.email);
+        
+        // Handle auth events
+        if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED' && !session) {
+          setSession(null);
+          setUser(null);
+          setLoading(false);
+          return;
+        }
+
+        if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') {
+          setSession(session);
+          setUser(session?.user ?? null);
+          
+          // Log user profile info for debugging
+          if (session?.user) {
+            try {
+              const { data: profile } = await supabase
+                .from('user_profiles')
+                .select('role, full_name')
+                .eq('user_id', session.user.id)
+                .single();
+              
+              console.log('[AUTH] User profile:', profile);
+            } catch (error) {
+              console.error('[AUTH] Error fetching profile:', error);
+            }
+          }
+        }
+        
         setLoading(false);
       }
     );
 
     // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (!isMounted) return;
+      
+      if (error) {
+        console.error('[AUTH] Session error:', error);
+        // Clear invalid session
+        setSession(null);
+        setUser(null);
+      } else {
+        console.log('[AUTH] Initial session:', session?.user?.id);
+        setSession(session);
+        setUser(session?.user ?? null);
+      }
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {

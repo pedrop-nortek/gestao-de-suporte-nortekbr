@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
+import { UserDebugInfo } from '@/components/UserDebugInfo';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -70,6 +71,26 @@ const Dashboard = () => {
 
   const fetchTickets = async () => {
     try {
+      // Log current user for debugging
+      const { data: { user } } = await supabase.auth.getUser();
+      console.log('[DASHBOARD] Current user:', user?.id, user?.email);
+      
+      if (!user) {
+        console.warn('[DASHBOARD] No authenticated user found');
+        setTickets([]);
+        setLoading(false);
+        return;
+      }
+
+      // Check user role
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('role, full_name')
+        .eq('user_id', user.id)
+        .single();
+      
+      console.log('[DASHBOARD] User profile:', profile);
+
       const { data, error } = await supabase
         .from('tickets')
         .select(`
@@ -80,12 +101,20 @@ const Dashboard = () => {
         `)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('[DASHBOARD] Tickets error:', error);
+        throw error;
+      }
+      
+      console.log('[DASHBOARD] Tickets loaded:', data?.length, 'tickets');
+      console.log('[DASHBOARD] Sample ticket access check:', data?.[0]?.created_by, 'vs user:', user.id);
+      
       setTickets(data || []);
     } catch (error) {
+      console.error('[DASHBOARD] Full error:', error);
       toast({
         title: 'Erro',
-        description: 'Erro ao carregar tickets',
+        description: `Erro ao carregar tickets: ${error.message}`,
         variant: 'destructive',
       });
     } finally {
@@ -254,6 +283,8 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6">
+      <UserDebugInfo />
+      
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Tickets</h1>
         <Button asChild>
