@@ -5,16 +5,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Mail } from "lucide-react";
 
 export const AuthTabs = () => {
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, resetPassword } = useAuth();
   const { toast } = useToast();
-  const [loading, setLoading] = useState<"signin" | "signup" | null>(null);
+  const [loading, setLoading] = useState<"signin" | "signup" | "reset" | null>(null);
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
 
   const handleSignIn = async () => {
     if (!loginEmail || !loginPassword) {
@@ -49,6 +52,27 @@ export const AuthTabs = () => {
     }
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetEmail) {
+      toast({ title: "Atenção", description: "Informe seu email.", variant: "destructive" });
+      return;
+    }
+    setLoading("reset");
+    const { error } = await resetPassword(resetEmail);
+    setLoading(null);
+    if (error) {
+      toast({ title: "Erro", description: error.message || "Tente novamente.", variant: "destructive" });
+    } else {
+      toast({
+        title: "Email enviado",
+        description: "Verifique seu email para redefinir a senha.",
+      });
+      setForgotPasswordOpen(false);
+      setResetEmail("");
+    }
+  };
+
   return (
     <div className="w-full max-w-md">
       <Tabs defaultValue="signin" className="w-full">
@@ -78,6 +102,47 @@ export const AuthTabs = () => {
           <Button onClick={handleSignIn} className="w-full" disabled={loading === "signin"}>
             {loading === "signin" ? "Entrando..." : "Entrar"}
           </Button>
+          
+          <Dialog open={forgotPasswordOpen} onOpenChange={setForgotPasswordOpen}>
+            <DialogTrigger asChild>
+              <Button variant="link" className="w-full mt-2 text-sm">
+                Esqueci minha senha
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Recuperar Senha</DialogTitle>
+                <DialogDescription>
+                  Digite seu email para receber um link de recuperação.
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleForgotPassword} className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Email</label>
+                  <Input
+                    type="email"
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
+                    required
+                    placeholder="seu@email.com"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    className="flex-1"
+                    onClick={() => setForgotPasswordOpen(false)}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button type="submit" className="flex-1" disabled={loading === "reset"}>
+                    {loading === "reset" ? "Enviando..." : "Enviar"}
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
         </TabsContent>
         <TabsContent value="signup" className="space-y-3">
           <div className="space-y-2">
