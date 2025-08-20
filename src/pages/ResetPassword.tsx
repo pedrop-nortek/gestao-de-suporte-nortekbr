@@ -9,80 +9,72 @@ import { Navigate, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 
 const ResetPassword = () => {
-  const { updatePassword, user, session } = useAuth();
+  const { updatePassword, user, session, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [isRecoveryMode, setIsRecoveryMode] = useState(false);
-  const [tokenProcessing, setTokenProcessing] = useState(true);
+  const [isInitializing, setIsInitializing] = useState(true);
+  const [canResetPassword, setCanResetPassword] = useState(false);
 
   useEffect(() => {
-    const checkRecoveryToken = async () => {
+    const initializeResetPassword = async () => {
+      // Aguardar o auth carregar
+      if (authLoading) return;
+
       try {
-        // Verificar se há tokens na URL (hash ou query params)
-        const urlHash = window.location.hash;
-        const urlParams = new URLSearchParams(window.location.search);
+        // Verificar se há session ativa
+        const { data: { session: currentSession }, error } = await supabase.auth.getSession();
         
-        // Buscar tokens em diferentes locais
-        const hashParams = new URLSearchParams(urlHash.substring(1));
-        const accessToken = hashParams.get('access_token') || urlParams.get('access_token');
-        const refreshToken = hashParams.get('refresh_token') || urlParams.get('refresh_token');
-        const tokenType = hashParams.get('type') || urlParams.get('type');
-        
-        console.log('Recovery check:', { accessToken: !!accessToken, refreshToken: !!refreshToken, tokenType });
-        
-        if (accessToken && tokenType === 'recovery') {
-          // Definir a sessão com os tokens da URL
-          const { data, error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken || ''
+        if (error) {
+          console.error('Erro ao verificar sessão:', error);
+          toast({
+            title: 'Link inválido',
+            description: 'Link de recuperação inválido ou expirado. Solicite um novo link.',
+            variant: 'destructive',
           });
+          navigate('/auth');
+          return;
+        }
+
+        if (currentSession?.user) {
+          console.log('Sessão válida encontrada para reset de senha');
+          setCanResetPassword(true);
           
-          if (error) {
-            console.error('Erro ao processar token de recovery:', error);
-            toast({
-              title: 'Erro',
-              description: 'Link de recuperação inválido ou expirado.',
-              variant: 'destructive',
-            });
-            navigate('/auth');
-          } else {
-            console.log('Token de recovery processado com sucesso');
-            setIsRecoveryMode(true);
-            // Limpar URL dos tokens após processar
+          // Limpar tokens da URL se existirem
+          if (window.location.hash || window.location.search.includes('access_token')) {
             window.history.replaceState({}, document.title, '/auth/reset-password');
           }
-        } else if (session?.user) {
-          // Se há sessão mas não está em recovery mode, verificar se é sessão de recovery
-          // Usuários em sessão normal não deveriam estar aqui
-          console.log('Usuário já logado, verificando contexto...');
-          setIsRecoveryMode(true);
-        } else if (!session && !accessToken) {
-          // Se não há tokens nem sessão, redirecionar para auth
+        } else {
+          // Sem sessão válida
+          toast({
+            title: 'Acesso negado',
+            description: 'É necessário um link válido de recuperação de senha. Verifique sua caixa de email.',
+            variant: 'destructive',
+          });
           navigate('/auth');
         }
       } catch (error) {
-        console.error('Erro ao verificar token:', error);
+        console.error('Erro ao inicializar reset de senha:', error);
         navigate('/auth');
       } finally {
-        setTokenProcessing(false);
+        setIsInitializing(false);
       }
     };
 
-    checkRecoveryToken();
-  }, [session, navigate, toast]);
+    initializeResetPassword();
+  }, [authLoading, navigate, toast]);
 
-  // Se ainda está processando o token, mostrar loading
-  if (tokenProcessing) {
+  // Se ainda está carregando o auth ou inicializando
+  if (authLoading || isInitializing) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md">
           <CardContent className="p-6">
             <div className="text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-              <p>Processando link de recuperação...</p>
+              <p>Verificando link de recuperação...</p>
             </div>
           </CardContent>
         </Card>
@@ -90,9 +82,9 @@ const ResetPassword = () => {
     );
   }
 
-  // Se usuário já está logado e não está em modo recovery, redirecionar para dashboard
-  if (user && session && !isRecoveryMode) {
-    return <Navigate to="/dashboard" replace />;
+  // Se não pode redefinir senha, redirecionar
+  if (!canResetPassword) {
+    return <Navigate to="/auth" replace />;
   }
 
   const handleResetPassword = async (e: React.FormEvent) => {
@@ -125,25 +117,25 @@ const ResetPassword = () => {
         console.error('Erro ao atualizar senha:', error);
         toast({
           title: 'Erro',
-          description: error.message || 'Erro ao atualizar senha.',
+          description: error.message || 'Erro ao atualizar senha. Tente novamente.',
           variant: 'destructive',
         });
       } else {
-        console.log('Senha atualizada com sucesso');
         toast({
-          title: 'Sucesso',
-          description: 'Senha atualizada com sucesso!',
+          title: 'Sucesso!',
+          description: 'Senha atualizada com sucesso! Redirecionando...',
         });
         
-        // Limpar a URL de tokens após sucesso
-        window.history.replaceState({}, document.title, '/dashboard');
-        navigate('/dashboard');
+        // Aguardar um momento antes de redirecionar
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 1500);
       }
     } catch (error) {
       console.error('Erro inesperado:', error);
       toast({
         title: 'Erro',
-        description: 'Erro inesperado ao atualizar senha.',
+        description: 'Erro inesperado ao atualizar senha. Tente novamente.',
         variant: 'destructive',
       });
     } finally {
@@ -156,7 +148,9 @@ const ResetPassword = () => {
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Redefinir Senha</CardTitle>
-          <CardDescription>Digite sua nova senha</CardDescription>
+          <CardDescription>
+            Digite sua nova senha para finalizar o processo de recuperação
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleResetPassword} className="space-y-4">
