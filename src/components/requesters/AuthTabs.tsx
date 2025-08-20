@@ -66,19 +66,13 @@ export const AuthTabs = () => {
         title: "Email já cadastrado",
         description: "Este email já possui uma conta. Use 'Esqueci minha senha' para recuperar o acesso.",
         variant: "destructive",
-        action: (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setResetEmail(signupEmail);
-              setForgotPasswordOpen(true);
-            }}
-          >
-            Recuperar senha
-          </Button>
-        ),
       });
+      
+      // Abrir automaticamente o dialog de recuperação
+      setTimeout(() => {
+        setResetEmail(signupEmail);
+        setForgotPasswordOpen(true);
+      }, 100);
       return;
     }
 
