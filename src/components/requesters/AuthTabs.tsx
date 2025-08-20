@@ -34,20 +34,75 @@ export const AuthTabs = () => {
     }
   };
 
+  const checkIfUserExists = async (email: string): Promise<boolean> => {
+    try {
+      // Tenta fazer login com uma senha inválida para detectar se o email existe
+      const { error } = await signIn(email, "invalid_password_check_12345");
+      
+      // Se retornar "Invalid login credentials", o email existe
+      if (error?.message?.includes("Invalid login credentials")) {
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  };
+
   const handleSignUp = async () => {
     if (!signupEmail || !signupPassword) {
       toast({ title: "Atenção", description: "Informe email e senha.", variant: "destructive" });
       return;
     }
+    
     setLoading("signup");
+    
+    // Verifica se o email já existe
+    const userExists = await checkIfUserExists(signupEmail);
+    
+    if (userExists) {
+      setLoading(null);
+      toast({
+        title: "Email já cadastrado",
+        description: "Este email já possui uma conta. Use 'Esqueci minha senha' para recuperar o acesso.",
+        variant: "destructive",
+        action: (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setResetEmail(signupEmail);
+              setForgotPasswordOpen(true);
+            }}
+          >
+            Recuperar senha
+          </Button>
+        ),
+      });
+      return;
+    }
+
     const { error } = await signUp(signupEmail, signupPassword);
     setLoading(null);
+    
     if (error) {
       toast({ title: "Erro ao cadastrar", description: error.message || "Tente novamente.", variant: "destructive" });
     } else {
       toast({
-        title: "Cadastro realizado",
-        description: "Verifique seu email para confirmar o acesso.",
+        title: "Cadastro iniciado",
+        description: "Verifique seu email (inclusive na pasta spam) para confirmar o acesso. Se não receber, use 'Esqueci minha senha'.",
+        action: (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setResetEmail(signupEmail);
+              setForgotPasswordOpen(true);
+            }}
+          >
+            Não recebi o email
+          </Button>
+        ),
       });
     }
   };
