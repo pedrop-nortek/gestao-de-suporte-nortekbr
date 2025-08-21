@@ -58,7 +58,7 @@ export const CompanyAutocomplete = ({ value, onChange, onCompanyLoaded, placehol
     }
     const comp = companies.find(c => c.id === value);
     if (comp) onCompanyLoaded?.(comp);
-  }, [value, companies, onCompanyLoaded]);
+  }, [value, companies]);
 
   const handleCreate = async () => {
     if (!newCompany.name.trim() || !newCompany.country.trim()) {

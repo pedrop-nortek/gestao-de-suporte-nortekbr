@@ -1,5 +1,5 @@
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -188,7 +188,7 @@ export default function Requesters() {
   }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Ao trocar empresa, pré-preencher país
-  const handleCompanyLoaded = (c: Company | null) => {
+  const handleCompanyLoaded = useCallback((c: Company | null) => {
     setSelectedCompany(c);
     if (c?.country) {
       ticketForm.setValue("country", c.country);
@@ -196,7 +196,7 @@ export default function Requesters() {
     if (c?.id) {
       linkForm.setValue("company_id", c.id);
     }
-  };
+  }, [ticketForm, linkForm]);
 
   const creatingTicket = ticketForm.formState.isSubmitting;
 
