@@ -171,15 +171,16 @@ export default function Requesters() {
     setLoadingTickets(true);
     const { data, error } = await supabase
       .from("tickets")
-      .select("id, ticket_number, title, status, priority, created_at, country, companies(name)")
+      .select("id, ticket_number, title, status, priority, created_at, country, companies:company_id(name)")
       .order("created_at", { ascending: false })
       .limit(50);
     setLoadingTickets(false);
     if (error) {
-      console.error(error);
+      console.error("Error fetching tickets:", error);
       toast({ title: "Erro", description: "Não foi possível carregar seus tickets.", variant: "destructive" });
       return;
     }
+    console.log("Tickets loaded:", data);
     setMyTickets(data || []);
   };
 
