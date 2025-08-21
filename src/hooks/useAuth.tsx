@@ -36,8 +36,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       async (event, session) => {
         if (!isMounted) return;
         
-        console.log('[AUTH] Event:', event, 'Session:', session?.user?.id, 'User Role:', session?.user?.email);
-        
         // Handle auth events
         if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED' && !session) {
           setSession(null);
@@ -49,21 +47,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') {
           setSession(session);
           setUser(session?.user ?? null);
-          
-          // Log user profile info for debugging
-          if (session?.user) {
-            try {
-              const { data: profile } = await supabase
-                .from('user_profiles')
-                .select('role, full_name')
-                .eq('user_id', session.user.id)
-                .single();
-              
-              console.log('[AUTH] User profile:', profile);
-            } catch (error) {
-              console.error('[AUTH] Error fetching profile:', error);
-            }
-          }
         }
         
         setLoading(false);
@@ -76,11 +59,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       if (error) {
         console.error('[AUTH] Session error:', error);
-        // Clear invalid session
         setSession(null);
         setUser(null);
       } else {
-        console.log('[AUTH] Initial session:', session?.user?.id);
         setSession(session);
         setUser(session?.user ?? null);
       }
