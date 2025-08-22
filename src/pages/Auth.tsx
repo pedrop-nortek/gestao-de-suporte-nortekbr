@@ -8,6 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Navigate } from 'react-router-dom';
+import { Users } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const Auth = () => {
   const { signIn, signUp, resetPassword, user } = useAuth();
@@ -98,6 +100,21 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <div className="absolute top-4 right-4">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <a href="/suporte" className="text-sm text-muted-foreground hover:text-foreground p-2 rounded-md hover:bg-accent transition-colors flex items-center gap-1">
+                <Users className="h-4 w-4" />
+                <span className="hidden sm:inline">Portal de Suporte</span>
+              </a>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Ir para o Portal de Suporte</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Sistema de Tickets</CardTitle>

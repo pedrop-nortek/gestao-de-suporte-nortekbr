@@ -16,7 +16,8 @@ import { CompanyAutocomplete } from "@/components/requesters/CompanyAutocomplete
 import { EquipmentModelAutocomplete } from "@/components/requesters/EquipmentModelAutocomplete";
 import { PriorityHint } from "@/components/requesters/PriorityHint";
 import { Database } from "@/integrations/supabase/types";
-import { AlertCircle, ListChecks, PlusCircle, User, Phone, Mail, Ticket } from "lucide-react";
+import { AlertCircle, ListChecks, PlusCircle, User, Phone, Mail, Ticket, Lock } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 type TicketPriority = Database["public"]["Enums"]["ticket_priority"];
 
@@ -268,7 +269,18 @@ export default function Requesters() {
       <div className="min-h-screen ocean-bg">
         <div className="container mx-auto px-4 py-10 space-y-8">
           <div className="flex justify-end">
-            <a href="/auth" className="text-sm text-muted-foreground hover:text-foreground">Acesso da equipe</a>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <a href="/auth" className="text-sm text-muted-foreground hover:text-foreground p-2 rounded-md hover:bg-accent transition-colors">
+                    <Lock className="h-4 w-4" />
+                  </a>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Acesso da equipe (restrito)</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
           <div className="text-center space-y-2">
             <h1 className="text-3xl font-bold">Portal de Suporte</h1>
@@ -285,7 +297,18 @@ export default function Requesters() {
   return (
     <div className="min-h-screen ocean-bg container mx-auto px-4 py-8 space-y-8">
       <div className="flex justify-end">
-        <a href="/auth" className="text-sm text-muted-foreground hover:text-foreground">Acesso da equipe</a>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <a href="/auth" className="text-sm text-muted-foreground hover:text-foreground p-2 rounded-md hover:bg-accent transition-colors">
+                <Lock className="h-4 w-4" />
+              </a>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Acesso da equipe (restrito)</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
       <div className="flex items-center justify-between">
         <div className="space-y-1">
