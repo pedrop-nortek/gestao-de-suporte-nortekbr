@@ -16,7 +16,7 @@ import { CompanyAutocomplete } from "@/components/requesters/CompanyAutocomplete
 import { EquipmentModelAutocomplete } from "@/components/requesters/EquipmentModelAutocomplete";
 import { PriorityHint } from "@/components/requesters/PriorityHint";
 import { Database } from "@/integrations/supabase/types";
-import { AlertCircle, ListChecks, PlusCircle, User, Phone, Mail, Ticket, Lock } from "lucide-react";
+import { AlertCircle, ListChecks, PlusCircle, User, Phone, Mail, Ticket, Lock, LogOut } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 type TicketPriority = Database["public"]["Enums"]["ticket_priority"];
@@ -48,7 +48,7 @@ type TicketForm = z.infer<typeof TicketSchema>;
 type Company = { id: string; name: string; country: string | null };
 
 export default function Requesters() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { toast } = useToast();
 
   // Estado de vínculo
@@ -264,6 +264,16 @@ export default function Requesters() {
 
   const isLinked = useMemo(() => Boolean(user && linkForm.getValues("company_id") && contactId), [user, contactId, linkForm]);
 
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      toast({ title: "Logout realizado", description: "Você foi desconectado com sucesso." });
+    } catch (error) {
+      console.error("Erro no logout:", error);
+      toast({ title: "Erro", description: "Falha ao fazer logout.", variant: "destructive" });
+    }
+  };
+
   if (!user) {
     return (
       <div className="min-h-screen ocean-bg">
@@ -296,7 +306,23 @@ export default function Requesters() {
 
   return (
     <div className="min-h-screen ocean-bg container mx-auto px-4 py-8 space-y-8">
-      <div className="flex justify-end">
+      <div className="flex justify-end items-center gap-2">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={handleLogout}
+                className="text-sm text-muted-foreground hover:text-foreground p-2 rounded-md hover:bg-accent transition-colors"
+              >
+                <LogOut className="h-4 w-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Fazer logout</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
