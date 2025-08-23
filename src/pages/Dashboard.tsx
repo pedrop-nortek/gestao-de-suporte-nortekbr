@@ -140,7 +140,8 @@ const Dashboard = () => {
     try {
       const { data, error } = await supabase
         .from('user_profiles')
-        .select('user_id, full_name')
+        .select('user_id, full_name, role')
+        .in('role', ['support_agent', 'admin'])
         .order('full_name');
 
       if (error) throw error;

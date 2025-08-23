@@ -163,7 +163,8 @@ export const NewTicket = () => {
     try {
       const { data, error } = await supabase
         .from('user_profiles')
-        .select('id, user_id, full_name')
+        .select('id, user_id, full_name, role')
+        .in('role', ['support_agent', 'admin'])
         .order('full_name');
       
       if (error) throw error;
