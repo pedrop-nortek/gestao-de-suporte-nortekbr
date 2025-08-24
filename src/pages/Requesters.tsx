@@ -16,9 +16,10 @@ import { CompanyAutocomplete } from "@/components/requesters/CompanyAutocomplete
 import { EquipmentModelAutocomplete } from "@/components/requesters/EquipmentModelAutocomplete";
 import { PriorityHint } from "@/components/requesters/PriorityHint";
 import { Database } from "@/integrations/supabase/types";
-import { AlertCircle, ListChecks, PlusCircle, User, Phone, Mail, Ticket, Lock, LogOut, ChevronRight } from "lucide-react";
+import { AlertCircle, ListChecks, PlusCircle, User, Phone, Mail, Ticket, Lock, LogOut, ChevronRight, ChevronDown } from "lucide-react";
 import { TicketDetailDialog } from "@/components/TicketDetailDialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 type TicketPriority = Database["public"]["Enums"]["ticket_priority"];
 
@@ -56,6 +57,9 @@ export default function Requesters() {
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [contactId, setContactId] = useState<string | null>(null);
   const [linkLoading, setLinkLoading] = useState(false);
+
+  // Estado do collapsible
+  const [isUserDataOpen, setIsUserDataOpen] = useState(false);
 
   // Tickets do solicitante
   const [myTickets, setMyTickets] = useState<any[]>([]);
@@ -353,49 +357,63 @@ export default function Requesters() {
       </div>
 
       {/* Vincular Empresa/Contato */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <User className="h-5 w-5 text-primary" />
-            Seus dados
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Empresa</Label>
-              <CompanyAutocomplete
-                value={linkForm.watch("company_id")}
-                onChange={(val) => linkForm.setValue("company_id", val)}
-                onCompanyLoaded={handleCompanyLoaded}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Nome</Label>
-              <Input value={linkForm.watch("name")} onChange={(e) => linkForm.setValue("name", e.target.value)} placeholder="Seu nome" />
-            </div>
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2"><Mail className="h-4 w-4" /> Email</Label>
-              <Input type="email" value={linkForm.watch("email")} onChange={(e) => linkForm.setValue("email", e.target.value)} placeholder="voce@empresa.com" />
-            </div>
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2"><Phone className="h-4 w-4" /> Telefone</Label>
-              <Input value={linkForm.watch("phone") || ""} onChange={(e) => linkForm.setValue("phone", e.target.value)} placeholder="(xx) xxxxx-xxxx" />
-            </div>
-          </div>
-          <div className="flex justify-end">
-            <Button onClick={linkForm.handleSubmit(handleLink)} disabled={linkLoading}>
-              {linkLoading ? "Salvando..." : "Vincular Atualizações"}
-            </Button>
-          </div>
-          {!isLinked && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <AlertCircle className="h-4 w-4" />
-              Vincule-se a uma empresa para liberar o formulário de ticket.
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <Collapsible open={isUserDataOpen} onOpenChange={setIsUserDataOpen}>
+        <Card>
+          <CardHeader>
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" className="flex items-center justify-between w-full p-0 h-auto">
+                <CardTitle className="flex items-center gap-2">
+                  <User className="h-5 w-5 text-primary" />
+                  Seus dados
+                </CardTitle>
+                <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isUserDataOpen ? 'rotate-180' : ''}`} />
+              </Button>
+            </CollapsibleTrigger>
+            {!isUserDataOpen && selectedCompany && (
+              <div className="text-sm text-muted-foreground mt-2">
+                {selectedCompany.name} • {linkForm.watch("name")} • {linkForm.watch("email")}
+              </div>
+            )}
+          </CardHeader>
+          <CollapsibleContent>
+            <CardContent className="space-y-4">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Empresa</Label>
+                  <CompanyAutocomplete
+                    value={linkForm.watch("company_id")}
+                    onChange={(val) => linkForm.setValue("company_id", val)}
+                    onCompanyLoaded={handleCompanyLoaded}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Nome</Label>
+                  <Input value={linkForm.watch("name")} onChange={(e) => linkForm.setValue("name", e.target.value)} placeholder="Seu nome" />
+                </div>
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2"><Mail className="h-4 w-4" /> Email</Label>
+                  <Input type="email" value={linkForm.watch("email")} onChange={(e) => linkForm.setValue("email", e.target.value)} placeholder="voce@empresa.com" />
+                </div>
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2"><Phone className="h-4 w-4" /> Telefone</Label>
+                  <Input value={linkForm.watch("phone") || ""} onChange={(e) => linkForm.setValue("phone", e.target.value)} placeholder="(xx) xxxxx-xxxx" />
+                </div>
+              </div>
+              <div className="flex justify-end">
+                <Button onClick={linkForm.handleSubmit(handleLink)} disabled={linkLoading}>
+                  {linkLoading ? "Salvando..." : "Salvar Dados"}
+                </Button>
+              </div>
+              {!isLinked && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <AlertCircle className="h-4 w-4" />
+                  Vincule-se a uma empresa para liberar o formulário de ticket.
+                </div>
+              )}
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
 
       {/* Formulário de novo ticket */}
       <Card className={isLinked ? "" : "opacity-50 pointer-events-none"}>
