@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { RoleProtectedRoute } from "@/components/RoleProtectedRoute";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 
 import Auth from "./pages/Auth";
@@ -21,6 +22,7 @@ import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
 import Requesters from "./pages/Requesters";
 import NotFound from "./pages/NotFound";
+import AccessDenied from "./pages/AccessDenied";
 
 const queryClient = new QueryClient();
 
@@ -35,75 +37,76 @@ const App = () => (
             <Route path="/" element={<Requesters />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/auth/reset-password" element={<ResetPassword />} />
+            <Route path="/access-denied" element={<AccessDenied />} />
             <Route path="/dashboard" element={
-              <ProtectedRoute>
+              <RoleProtectedRoute allowedRoles={['support_agent', 'admin']}>
                 <DashboardLayout>
                   <Dashboard />
                 </DashboardLayout>
-              </ProtectedRoute>
+              </RoleProtectedRoute>
             } />
             <Route path="/dashboard/tickets/:id" element={
-              <ProtectedRoute>
+              <RoleProtectedRoute allowedRoles={['support_agent', 'admin']}>
                 <DashboardLayout>
                   <TicketDetail />
                 </DashboardLayout>
-              </ProtectedRoute>
+              </RoleProtectedRoute>
             } />
             <Route path="/dashboard/tickets/new" element={
-              <ProtectedRoute>
+              <RoleProtectedRoute allowedRoles={['support_agent', 'admin']}>
                 <DashboardLayout>
                   <NewTicket />
                 </DashboardLayout>
-              </ProtectedRoute>
+              </RoleProtectedRoute>
             } />
             <Route path="/dashboard/companies" element={
-              <ProtectedRoute>
+              <RoleProtectedRoute allowedRoles={['support_agent', 'admin']}>
                 <DashboardLayout>
                   <Companies />
                 </DashboardLayout>
-              </ProtectedRoute>
+              </RoleProtectedRoute>
             } />
             <Route path="/dashboard/equipment-models" element={
-              <ProtectedRoute>
+              <RoleProtectedRoute allowedRoles={['support_agent', 'admin']}>
                 <DashboardLayout>
                   <EquipmentModels />
                 </DashboardLayout>
-              </ProtectedRoute>
+              </RoleProtectedRoute>
             } />
             <Route path="/dashboard/rmas" element={
-              <ProtectedRoute>
+              <RoleProtectedRoute allowedRoles={['support_agent', 'admin']}>
                 <DashboardLayout>
                   <RMAs />
                 </DashboardLayout>
-              </ProtectedRoute>
+              </RoleProtectedRoute>
             } />
             <Route path="/dashboard/rmas/:id" element={
-              <ProtectedRoute>
+              <RoleProtectedRoute allowedRoles={['support_agent', 'admin']}>
                 <DashboardLayout>
                   <RMADetail />
                 </DashboardLayout>
-              </ProtectedRoute>
+              </RoleProtectedRoute>
             } />
             <Route path="/dashboard/reports" element={
-              <ProtectedRoute>
+              <RoleProtectedRoute allowedRoles={['support_agent', 'admin']}>
                 <DashboardLayout>
                   <Reports />
                 </DashboardLayout>
-              </ProtectedRoute>
+              </RoleProtectedRoute>
             } />
             <Route path="/dashboard/settings" element={
-              <ProtectedRoute>
+              <RoleProtectedRoute allowedRoles={['support_agent', 'admin']}>
                 <DashboardLayout>
                   <Settings />
                 </DashboardLayout>
-              </ProtectedRoute>
+              </RoleProtectedRoute>
             } />
             <Route path="/dashboard/profile" element={
-              <ProtectedRoute>
+              <RoleProtectedRoute allowedRoles={['support_agent', 'admin']}>
                 <DashboardLayout>
                   <Profile />
                 </DashboardLayout>
-              </ProtectedRoute>
+              </RoleProtectedRoute>
             } />
             <Route path="/solicitantes" element={<Requesters />} />
             <Route path="/suporte" element={<Requesters />} />

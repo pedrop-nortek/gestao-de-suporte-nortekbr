@@ -12,14 +12,19 @@ import { Users } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const Auth = () => {
-  const { signIn, signUp, resetPassword, user } = useAuth();
+  const { signIn, signUp, resetPassword, user, userRole } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
 
-  if (user) {
-    return <Navigate to="/dashboard" replace />;
+  if (user && userRole) {
+    // Redirect based on user role
+    if (userRole === 'support_agent' || userRole === 'admin') {
+      return <Navigate to="/dashboard" replace />;
+    } else {
+      return <Navigate to="/" replace />;
+    }
   }
 
   const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
