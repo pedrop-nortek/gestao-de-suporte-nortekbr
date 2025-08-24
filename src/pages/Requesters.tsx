@@ -16,7 +16,8 @@ import { CompanyAutocomplete } from "@/components/requesters/CompanyAutocomplete
 import { EquipmentModelAutocomplete } from "@/components/requesters/EquipmentModelAutocomplete";
 import { PriorityHint } from "@/components/requesters/PriorityHint";
 import { Database } from "@/integrations/supabase/types";
-import { AlertCircle, ListChecks, PlusCircle, User, Phone, Mail, Ticket, Lock, LogOut } from "lucide-react";
+import { AlertCircle, ListChecks, PlusCircle, User, Phone, Mail, Ticket, Lock, LogOut, ChevronRight } from "lucide-react";
+import { TicketDetailDialog } from "@/components/TicketDetailDialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 type TicketPriority = Database["public"]["Enums"]["ticket_priority"];
@@ -59,6 +60,8 @@ export default function Requesters() {
   // Tickets do solicitante
   const [myTickets, setMyTickets] = useState<any[]>([]);
   const [loadingTickets, setLoadingTickets] = useState(false);
+  const [selectedTicket, setSelectedTicket] = useState<any>(null);
+  const [isTicketDialogOpen, setIsTicketDialogOpen] = useState(false);
 
   // Forms
   const linkForm = useForm<LinkForm>({
@@ -529,7 +532,14 @@ export default function Requesters() {
           ) : (
             <div className="grid gap-3">
               {myTickets.map((t) => (
-                <div key={t.id} className="border rounded p-4 space-y-3">
+                <div 
+                  key={t.id} 
+                  className="border rounded p-4 cursor-pointer hover:bg-muted/50 transition-colors"
+                  onClick={() => {
+                    setSelectedTicket(t);
+                    setIsTicketDialogOpen(true);
+                  }}
+                >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Ticket className="h-4 w-4 text-primary" />
@@ -542,83 +552,36 @@ export default function Requesters() {
                       <span className="inline-flex items-center rounded-full bg-primary/10 text-primary px-2 py-0.5 text-xs font-medium">
                         {t.priority}
                       </span>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
                     </div>
                   </div>
                   
-                  <div>
+                  <div className="mt-3">
                     <h3 className="font-medium text-base">{t.title}</h3>
                     <p className="text-sm text-muted-foreground mt-1">
                       {t.companies?.name ? `${t.companies.name} • ` : ""}{t.country || "País não informado"}
                     </p>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div className="space-y-2">
-                      {t.user_profiles?.full_name && (
-                        <div>
-                          <span className="text-muted-foreground">Responsável:</span>
-                          <span className="ml-2 font-medium">{t.user_profiles.full_name}</span>
-                        </div>
-                      )}
-                      
-                      {(t.equipment_models?.name || t.equipment_model) && (
-                        <div>
-                          <span className="text-muted-foreground">Equipamento:</span>
-                          <span className="ml-2 font-medium">
-                            {t.equipment_models?.name ? 
-                              `${t.equipment_models.name}${t.equipment_models.manufacturer ? ` (${t.equipment_models.manufacturer})` : ''}` 
-                              : t.equipment_model
-                            }
-                          </span>
-                        </div>
-                      )}
-                      
-                      {t.serial_number && (
-                        <div>
-                          <span className="text-muted-foreground">Série:</span>
-                          <span className="ml-2 font-medium">{t.serial_number}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      {t.rma_requests && t.rma_requests.length > 0 && (
-                        <div>
-                          <span className="text-muted-foreground">RMA:</span>
-                          <div className="ml-2">
-                            {t.rma_requests.map((rma: any) => (
-                              <div key={rma.id} className="flex items-center gap-2">
-                                <span className="font-medium">#{rma.rma_number}</span>
-                                <span className="inline-flex items-center rounded-full bg-secondary px-2 py-0.5 text-xs">
-                                  {rma.status}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      
-                      <div>
-                        <span className="text-muted-foreground">Criado em:</span>
-                        <span className="ml-2">{new Date(t.created_at).toLocaleString()}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {t.ticket_log && t.ticket_log.trim() && (
-                    <div className="border-t pt-2">
-                      <span className="text-muted-foreground text-sm">Log do ticket:</span>
-                      <p className="text-sm mt-1 p-2 bg-muted/50 rounded text-muted-foreground">
-                        {t.ticket_log.length > 200 ? `${t.ticket_log.substring(0, 200)}...` : t.ticket_log}
+                    {t.user_profiles?.full_name && (
+                      <p className="text-sm text-muted-foreground">
+                        Responsável: {t.user_profiles.full_name}
                       </p>
-                    </div>
-                  )}
+                    )}
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Criado em: {new Date(t.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
                 </div>
               ))}
             </div>
           )}
         </CardContent>
       </Card>
+
+      <TicketDetailDialog 
+        isOpen={isTicketDialogOpen}
+        onClose={() => setIsTicketDialogOpen(false)}
+        ticket={selectedTicket}
+      />
     </div>
   );
 }
