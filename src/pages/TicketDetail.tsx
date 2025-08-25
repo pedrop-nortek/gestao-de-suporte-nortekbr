@@ -27,6 +27,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { ArrowLeft, Clock, User, Building2, Tag, FileText, Wrench, Hash, Edit, Trash2, Save, X, Download, Plus, MessageSquare } from 'lucide-react';
+import { TicketMessages } from '@/components/TicketMessages';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { Database } from '@/integrations/supabase/types';
@@ -87,7 +88,6 @@ const TicketDetail = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  const [newLogEntry, setNewLogEntry] = useState('');
   const [rmaNumber, setRmaNumber] = useState('');
   const [showCreateRMA, setShowCreateRMA] = useState(false);
   const [newStatus, setNewStatus] = useState<Database['public']['Enums']['ticket_status']>('open');
@@ -232,37 +232,7 @@ const TicketDetail = () => {
     }
   };
 
-  const addLogEntry = async () => {
-    if (!newLogEntry.trim() || !ticket) return;
-
-    try {
-      const timestamp = new Date().toLocaleString('pt-BR');
-      const logEntry = `\n[${timestamp}]\n${newLogEntry.trim()}\n`;
-      const updatedLog = (ticket.ticket_log || '') + logEntry;
-
-      const { error } = await supabase
-        .from('tickets')
-        .update({ ticket_log: updatedLog })
-        .eq('id', id);
-
-      if (error) throw error;
-
-      setNewLogEntry('');
-      await fetchTicketDetails();
-      
-      toast({
-        title: "Sucesso",
-        description: "Entrada adicionada ao log do ticket",
-      });
-    } catch (error) {
-      console.error('Error adding log entry:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível adicionar a entrada ao log",
-        variant: "destructive",
-      });
-    }
-  };
+  // Function removed - now using TicketMessages component for messaging
 
   const exportLog = () => {
     if (!ticket) return;
@@ -792,13 +762,13 @@ const TicketDetail = () => {
           </CardContent>
         </Card>
 
-        {/* Ticket Log Section */}
+        {/* Ticket Messages Section */}
         <Card className="col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 justify-between">
               <span className="flex items-center gap-2">
                 <MessageSquare className="h-5 w-5" />
-                Log do Ticket
+                Conversas do Ticket
               </span>
               <div className="flex gap-2">
                 <Button onClick={exportLog} variant="outline" size="sm">
@@ -814,43 +784,12 @@ const TicketDetail = () => {
               </div>
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Existing Log */}
-            <div className="space-y-3 max-h-96 overflow-y-auto">
-              {!ticket?.ticket_log ? (
-                <p className="text-muted-foreground text-center py-4">
-                  Nenhuma entrada no log ainda
-                </p>
-              ) : (
-                <div className="p-3 bg-muted rounded-lg">
-                  <pre className="text-sm whitespace-pre-wrap font-mono">
-                    {ticket.ticket_log}
-                  </pre>
-                </div>
-              )}
-            </div>
+          <CardContent>
+            <TicketMessages ticketId={ticket.id} allowAddMessage={true} />
             
-            {/* Add New Log Entry */}
-            <div className="space-y-2">
-              <Label>Adicionar nova entrada ao log:</Label>
-              <div className="flex gap-2">
-                <Textarea
-                  placeholder="Descreva o que foi feito, descoberto ou tentado..."
-                  value={newLogEntry}
-                  onChange={(e) => setNewLogEntry(e.target.value)}
-                  className="flex-1"
-                  rows={3}
-                />
-              </div>
-              <Button onClick={addLogEntry} disabled={!newLogEntry.trim()}>
-                <Plus className="h-4 w-4 mr-2" />
-                Adicionar Entrada
-              </Button>
-            </div>
-
             {/* Create RMA Section */}
             {showCreateRMA && (
-              <div className="border-t pt-4 space-y-3">
+              <div className="border-t pt-4 mt-4 space-y-3">
                 <Label>Criar RMA para este ticket:</Label>
                 <p className="text-sm text-muted-foreground">
                   O número do RMA será adicionado quando a primeira etapa for concluída.

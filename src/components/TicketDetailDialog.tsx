@@ -1,6 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Ticket } from "lucide-react";
+import { TicketMessages } from '@/components/TicketMessages';
 
 interface TicketDetailDialogProps {
   isOpen: boolean;
@@ -125,15 +126,11 @@ export function TicketDetailDialog({ isOpen, onClose, ticket }: TicketDetailDial
             </div>
           )}
 
-          {/* Ticket Log */}
-          {ticket.ticket_log && ticket.ticket_log.trim() && (
-            <div className="space-y-2">
-              <h4 className="font-medium text-sm text-muted-foreground">Log do Ticket</h4>
-              <div className="p-3 bg-muted/50 rounded text-sm max-h-40 overflow-y-auto">
-                <pre className="whitespace-pre-wrap">{ticket.ticket_log}</pre>
-              </div>
-            </div>
-          )}
+          {/* Mensagens do Ticket */}
+          <div className="space-y-2">
+            <h4 className="font-medium text-sm text-muted-foreground">Conversas do Ticket</h4>
+            <TicketMessages ticketId={ticket.id} allowAddMessage={true} />
+          </div>
         </div>
       </DialogContent>
     </Dialog>
