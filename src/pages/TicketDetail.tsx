@@ -234,28 +234,115 @@ const TicketDetail = () => {
 
   // Function removed - now using TicketMessages component for messaging
 
-  const exportLog = () => {
+  const exportLog = async () => {
     if (!ticket) return;
 
-    const logContent = `TICKET #${ticket.ticket_number} - ${ticket.title}\n` +
+    try {
+      // Buscar mensagens
+      const { data: messagesData, error: messagesError } = await supabase
+        .from('ticket_messages')
+        .select('*')
+        .eq('ticket_id', ticket.id)
+        .order('created_at', { ascending: true });
+
+      if (messagesError) throw messagesError;
+
+      // Criar conteúdo do export
+      let logContent = `TICKET #${ticket.ticket_number} - ${ticket.title}\n` +
                       `Data de criação: ${new Date(ticket.created_at).toLocaleString('pt-BR')}\n` +
                       `Status: ${ticket.status}\n` +
                       `${ticket.companies ? `Empresa: ${ticket.companies.name}\n` : ''}` +
                       `${ticket.contacts ? `Contato: ${ticket.contacts.name}\n` : ''}` +
                       `${ticket.equipment_models ? `Equipamento: ${ticket.equipment_models.name}\n` : ''}` +
                       `${ticket.serial_number ? `Número de série: ${ticket.serial_number}\n` : ''}` +
-                      `\n--- LOG DO TICKET ---\n` +
-                      `${ticket.ticket_log || 'Nenhuma entrada no log ainda.'}`;
+                      `\n--- HISTÓRICO COMPLETO ---\n\n`;
 
-    const blob = new Blob([logContent], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `ticket-${ticket.ticket_number}-log.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+      // Combinar logs do sistema e mensagens
+      const allEntries: Array<{
+        type: 'log' | 'message';
+        content: string;
+        created_at: string;
+        sender?: string;
+      }> = [];
+
+      // Adicionar logs do sistema
+      if (ticket.ticket_log) {
+        const logLines = ticket.ticket_log.split('\n').filter(line => line.trim());
+        logLines.forEach(line => {
+          const timestampMatch = line.match(/\[([^\]]+)\]/);
+          let timestamp = new Date().toISOString();
+          let content = line;
+
+          if (timestampMatch) {
+            try {
+              const [date, time] = timestampMatch[1].split(' ');
+              const [day, month, year] = date.split('/');
+              const [hour, minute, second] = time.split(':');
+              timestamp = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), 
+                                 parseInt(hour), parseInt(minute), parseInt(second) || 0).toISOString();
+              content = line.replace(timestampMatch[0], '').trim();
+            } catch {
+              timestamp = ticket.created_at;
+            }
+          }
+
+          allEntries.push({
+            type: 'log',
+            content: `[SISTEMA] ${content}`,
+            created_at: timestamp
+          });
+        });
+      }
+
+      // Adicionar mensagens
+      messagesData?.forEach(msg => {
+        allEntries.push({
+          type: 'message',
+          content: msg.content,
+          created_at: msg.created_at,
+          sender: `${msg.sender_name || 'Usuário'} (${msg.sender_type === 'agent' ? 'Suporte' : 'Cliente'})`
+        });
+      });
+
+      // Ordenar por data
+      allEntries.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+
+      // Adicionar entradas ao conteúdo
+      allEntries.forEach(entry => {
+        const date = new Date(entry.created_at).toLocaleString('pt-BR');
+        if (entry.type === 'message') {
+          logContent += `[${date}] ${entry.sender}\n${entry.content}\n\n`;
+        } else {
+          logContent += `[${date}] ${entry.content}\n\n`;
+        }
+      });
+
+      if (allEntries.length === 0) {
+        logContent += 'Nenhuma atividade registrada ainda.\n';
+      }
+
+      const blob = new Blob([logContent], { type: 'text/plain; charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `ticket-${ticket.ticket_number}-historico-completo.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: 'Sucesso',
+        description: 'Histórico exportado com sucesso',
+      });
+    } catch (error: any) {
+      console.error('Error exporting log:', error);
+      toast({
+        title: 'Erro',
+        description: 'Erro ao exportar histórico',
+        variant: 'destructive',
+      });
+    }
   };
 
   const createRMA = async () => {
@@ -315,6 +402,11 @@ const TicketDetail = () => {
   const handleSaveEdit = async (data: EditTicketFormData) => {
     setEditLoading(true);
     try {
+      // Add log entry for ticket edit
+      const logEntry = `[${new Date().toLocaleString('pt-BR')}] Ticket editado - dados atualizados`;
+      const currentLog = ticket?.ticket_log || '';
+      const newLog = currentLog ? `${currentLog}\n${logEntry}` : logEntry;
+
       const { error } = await supabase
         .from('tickets')
         .update({
@@ -326,6 +418,7 @@ const TicketDetail = () => {
           serial_number: data.serial_number || null,
           country: data.country || null,
           priority: data.priority,
+          ticket_log: newLog,
         })
         .eq('id', id);
 
@@ -432,9 +525,20 @@ const TicketDetail = () => {
     if (newAssignedTo === ticket?.assigned_to) return;
 
     try {
+      const oldAssignedUser = users.find(u => u.user_id === ticket?.assigned_to);
+      const newAssignedUser = users.find(u => u.user_id === newAssignedTo);
+      
+      // Add log entry for assignment change
+      const logEntry = `[${new Date().toLocaleString('pt-BR')}] Responsável alterado de "${oldAssignedUser?.full_name || 'Não atribuído'}" para "${newAssignedUser?.full_name || 'Não atribuído'}"`;
+      const currentLog = ticket?.ticket_log || '';
+      const newLog = currentLog ? `${currentLog}\n${logEntry}` : logEntry;
+
       const { error } = await supabase
         .from('tickets')
-        .update({ assigned_to: newAssignedTo === 'unassigned' ? null : newAssignedTo })
+        .update({ 
+          assigned_to: newAssignedTo === 'unassigned' ? null : newAssignedTo,
+          ticket_log: newLog 
+        })
         .eq('id', id);
 
       if (error) throw error;
